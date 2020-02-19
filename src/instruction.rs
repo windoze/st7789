@@ -1,6 +1,6 @@
 use num_derive::ToPrimitive;
 
-/// ST7735 instructions.
+/// ST7789 instructions.
 #[derive(ToPrimitive)]
 pub enum Instruction {
     NOP = 0x00,

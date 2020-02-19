@@ -1,6 +1,6 @@
 #![no_std]
 
-//! This crate provides a ST7735 driver to connect to TFT displays.
+//! This crate provides a ST7789 driver to connect to TFT displays.
 
 pub mod instruction;
 
@@ -12,8 +12,8 @@ use embedded_hal::digital::v2::OutputPin;
 use embedded_hal::blocking::spi;
 use embedded_hal::blocking::delay::DelayMs;
 
-/// ST7735 driver to connect to TFT displays.
-pub struct ST7735 <SPI, DC, RST>
+/// ST7789 driver to connect to TFT displays.
+pub struct ST7789 <SPI, DC, RST>
 where
     SPI: spi::Write<u8>,
     DC: OutputPin,
@@ -48,7 +48,7 @@ pub enum Orientation {
     LandscapeSwapped = 0xA0,
 }
 
-impl<SPI, DC, RST> ST7735<SPI, DC, RST>
+impl<SPI, DC, RST> ST7789<SPI, DC, RST>
 where
     SPI: spi::Write<u8>,
     DC: OutputPin,
@@ -63,7 +63,7 @@ where
         inverted: bool,
     ) -> Self
     {
-        let display = ST7735 {
+        let display = ST7789 {
             spi,
             dc,
             rst,
@@ -205,7 +205,7 @@ extern crate embedded_graphics;
 use self::embedded_graphics::{drawable::{Pixel, Dimensions}, pixelcolor::Rgb565, Drawing, SizedDrawing};
 
 #[cfg(feature = "graphics")]
-impl<SPI, DC, RST> Drawing<Rgb565> for ST7735<SPI, DC, RST>
+impl<SPI, DC, RST> Drawing<Rgb565> for ST7789<SPI, DC, RST>
 where
     SPI: spi::Write<u8>,
     DC: OutputPin,
@@ -222,7 +222,7 @@ where
 }
 
 #[cfg(feature = "graphics")]
-impl<SPI, DC, RST> SizedDrawing<Rgb565> for ST7735<SPI, DC, RST>
+impl<SPI, DC, RST> SizedDrawing<Rgb565> for ST7789<SPI, DC, RST>
 where
     SPI: spi::Write<u8>,
     DC: OutputPin,
