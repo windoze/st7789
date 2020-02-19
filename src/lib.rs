@@ -203,7 +203,7 @@ where
 extern crate embedded_graphics;
 #[cfg(feature = "graphics")]
 use self::embedded_graphics::{
-    drawable::Pixel, pixelcolor::raw::*, pixelcolor::Rgb565, prelude::Size, DrawTarget,
+    drawable::Pixel, style::*, primitives::rectangle::Rectangle, pixelcolor::raw::*, pixelcolor::Rgb565, prelude::Size, DrawTarget,
 };
 
 #[cfg(feature = "graphics")]
@@ -221,6 +221,24 @@ where
         let y = pixel.0.y as u16;
 
         self.set_pixel(x, y, color).expect("pixel write failed");
+
+        Ok(())
+    }
+
+    fn draw_rectangle(&mut self, item: &Styled<Rectangle, PrimitiveStyle<Rgb565>>) -> Result<(), Self::Error> {
+        let sx = item.primitive.top_left.x as u16;
+        let sy = item.primitive.top_left.y as u16;
+        let ex = item.primitive.bottom_right.x as u16;
+        let ey = item.primitive.bottom_right.y as u16;
+
+        self.set_address_window(sx, sy, ex, ey).unwrap(); // TODO
+        self.write_command(Instruction::RAMWR, None).unwrap(); // TODO
+        self.start_data().unwrap(); // TODO
+
+        for pixel in item.into_iter() {
+            let color = RawU16::from(pixel.1).into_inner();
+            self.write_word(color).unwrap(); // TODO
+        }
 
         Ok(())
     }
