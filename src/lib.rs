@@ -5,15 +5,15 @@
 pub mod instruction;
 
 use crate::instruction::Instruction;
-use num_traits::ToPrimitive;
 use num_derive::ToPrimitive;
+use num_traits::ToPrimitive;
 
-use embedded_hal::digital::v2::OutputPin;
-use embedded_hal::blocking::spi;
 use embedded_hal::blocking::delay::DelayMs;
+use embedded_hal::blocking::spi;
+use embedded_hal::digital::v2::OutputPin;
 
 /// ST7789 driver to connect to TFT displays.
-pub struct ST7789 <SPI, DC, RST>
+pub struct ST7789<SPI, DC, RST>
 where
     SPI: spi::Write<u8>,
     DC: OutputPin,
@@ -33,6 +33,10 @@ where
 
     /// Whether the colours are inverted (true) or not (false)
     inverted: bool,
+
+    /// Screen size
+    size_x: u16,
+    size_y: u16,
 
     /// Global image offset
     dx: u16,
@@ -54,31 +58,42 @@ where
     DC: OutputPin,
     RST: OutputPin,
 {
-    /// Creates a new driver instance that uses hardware SPI.
-    pub fn new(
-        spi: SPI,
-        dc: DC,
-        rst: RST,
-        rgb: bool,
-        inverted: bool,
-    ) -> Self
-    {
+    ///
+    /// Creates a new ST7789 driver instance
+    ///
+    /// # Arguments
+    ///
+    /// * `spi` - an SPI interface to use for talking to the display
+    /// * `dc` - data/clock pin switch
+    /// * `rst` - display hard reset pin
+    /// * `size_x` - x axis resolution of the display in pixels
+    /// * `size_y` - y axis resolution of the display in pixels
+    ///
+    pub fn new(spi: SPI, dc: DC, rst: RST, size_x: u16, size_y: u16) -> Self {
         let display = ST7789 {
             spi,
             dc,
             rst,
-            rgb,
-            inverted,
+            rgb: true,
+            inverted: true,
             dx: 0,
-            dy: 0
+            dy: 0,
+            size_x: size_x,
+            size_y: size_y,
         };
 
         display
     }
 
-    /// Runs commands to initialize the display.
+    ///
+    /// Runs commands to initialize the display
+    ///
+    /// # Arguments
+    ///
+    /// * `delay` - a delay provided for the MCU/MPU this is running on
     pub fn init<DELAY>(&mut self, delay: &mut DELAY) -> Result<(), ()>
-        where DELAY: DelayMs<u8>
+    where
+        DELAY: DelayMs<u8>,
     {
         self.hard_reset()?;
         self.write_command(Instruction::SWRESET, None)?;
@@ -87,8 +102,10 @@ where
         delay.delay_ms(200);
         self.write_command(Instruction::FRMCTR1, Some(&[0x01, 0x2C, 0x2D]))?;
         self.write_command(Instruction::FRMCTR2, Some(&[0x01, 0x2C, 0x2D]))?;
-        self.write_command(Instruction::FRMCTR3,
-            Some(&[0x01, 0x2C, 0x2D, 0x01, 0x2C, 0x2D]))?;
+        self.write_command(
+            Instruction::FRMCTR3,
+            Some(&[0x01, 0x2C, 0x2D, 0x01, 0x2C, 0x2D]),
+        )?;
         self.write_command(Instruction::INVCTR, Some(&[0x07]))?;
         self.write_command(Instruction::PWCTR1, Some(&[0xA2, 0x02, 0x84]))?;
         self.write_command(Instruction::PWCTR2, Some(&[0xC5]))?;
@@ -112,8 +129,7 @@ where
         Ok(())
     }
 
-    pub fn hard_reset(&mut self) -> Result<(), ()>
-    {
+    pub fn hard_reset(&mut self) -> Result<(), ()> {
         self.rst.set_high().map_err(|_| ())?;
         self.rst.set_low().map_err(|_| ())?;
         self.rst.set_high().map_err(|_| ())
@@ -121,7 +137,9 @@ where
 
     fn write_command(&mut self, command: Instruction, params: Option<&[u8]>) -> Result<(), ()> {
         self.dc.set_low().map_err(|_| ())?;
-        self.spi.write(&[command.to_u8().unwrap()]).map_err(|_| ())?;
+        self.spi
+            .write(&[command.to_u8().unwrap()])
+            .map_err(|_| ())?;
         if params.is_some() {
             self.start_data()?;
             self.write_data(params.unwrap())?;
@@ -144,13 +162,12 @@ where
 
     pub fn set_orientation(&mut self, orientation: &Orientation) -> Result<(), ()> {
         if self.rgb {
-            self.write_command(
-                Instruction::MADCTL, Some(&[orientation.to_u8().unwrap()]
-            ))?;
+            self.write_command(Instruction::MADCTL, Some(&[orientation.to_u8().unwrap()]))?;
         } else {
             self.write_command(
-                Instruction::MADCTL, Some(&[orientation.to_u8().unwrap() | 0x08 ]
-            ))?;
+                Instruction::MADCTL,
+                Some(&[orientation.to_u8().unwrap() | 0x08]),
+            )?;
         }
         Ok(())
     }
@@ -174,70 +191,41 @@ where
     }
 
     /// Sets a pixel color at the given coords.
-    pub fn set_pixel(&mut self, x: u16, y: u16, color: u16) -> Result <(), ()> {
+    pub fn set_pixel(&mut self, x: u16, y: u16, color: u16) -> Result<(), ()> {
         self.set_address_window(x, y, x, y)?;
         self.write_command(Instruction::RAMWR, None)?;
         self.start_data()?;
         self.write_word(color)
     }
-
-    /// Writes pixel colors sequentially into the current drawing window
-    pub fn write_pixels<P: IntoIterator<Item = u16>>(&mut self, colors: P) -> Result <(), ()> {
-        self.write_command(Instruction::RAMWR, None)?;
-        self.start_data()?;
-        for color in colors {
-            self.write_word(color)?;
-        }
-        Ok(())
-    }
-
-    /// Sets pixel colors at the given drawing window
-    pub fn set_pixels<P: IntoIterator<Item = u16>>(&mut self, sx: u16, sy: u16, ex: u16, ey: u16, colors: P) -> Result <(), ()> {
-        self.set_address_window(sx, sy, ex, ey)?;
-        self.write_pixels(colors)
-    }
 }
-
 
 #[cfg(feature = "graphics")]
 extern crate embedded_graphics;
 #[cfg(feature = "graphics")]
-use self::embedded_graphics::{drawable::{Pixel, Dimensions}, pixelcolor::Rgb565, Drawing, SizedDrawing};
+use self::embedded_graphics::{
+    drawable::Pixel, pixelcolor::raw::*, pixelcolor::Rgb565, prelude::Size, DrawTarget,
+};
 
 #[cfg(feature = "graphics")]
-impl<SPI, DC, RST> Drawing<Rgb565> for ST7789<SPI, DC, RST>
+impl<SPI, DC, RST> DrawTarget<Rgb565> for ST7789<SPI, DC, RST>
 where
     SPI: spi::Write<u8>,
     DC: OutputPin,
     RST: OutputPin,
 {
-    fn draw<T>(&mut self, item_pixels: T)
-    where
-        T: IntoIterator<Item = Pixel<Rgb565>>,
-    {
-        for Pixel(coord, color) in item_pixels {
-            self.set_pixel(coord.0 as u16, coord.1 as u16, color.0).expect("pixel write failed");
-        }
+    type Error = SPI::Error;
+
+    fn draw_pixel(&mut self, pixel: Pixel<Rgb565>) -> Result<(), Self::Error> {
+        let color = RawU16::from(pixel.1).into_inner();
+        let x = pixel.0.x as u16;
+        let y = pixel.0.y as u16;
+
+        self.set_pixel(x, y, color).expect("pixel write failed");
+
+        Ok(())
     }
-}
 
-#[cfg(feature = "graphics")]
-impl<SPI, DC, RST> SizedDrawing<Rgb565> for ST7789<SPI, DC, RST>
-where
-    SPI: spi::Write<u8>,
-    DC: OutputPin,
-    RST: OutputPin,
-{
-    fn draw_sized<T>(&mut self, item_pixels: T)
-    where
-        T: IntoIterator<Item = Pixel<Rgb565>> + Dimensions,
-    {
-        // Get bounding box `Coord`s as `(u32, u32)`
-        let top_left = item_pixels.top_left();
-        let bottom_right = item_pixels.bottom_right();
-
-        self.set_pixels(top_left.0 as u16, top_left.1 as u16,
-                        bottom_right.0 as u16, bottom_right.1 as u16,
-                        item_pixels.into_iter().map(|Pixel(_coord, color)| color.0)).expect("pixels write failed")
+    fn size(&self) -> Size {
+        Size::new(self.size_x.into(), self.size_y.into())
     }
 }
