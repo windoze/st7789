@@ -56,7 +56,6 @@ pub enum Orientation {
 }
 
 /// An error holding its source (pins or SPI)
-#[derive(Debug)]
 pub enum Error<SPIE, DCE, RSTE> {
     Spi(SPIE),
     Dc(DCE),
