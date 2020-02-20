@@ -55,6 +55,14 @@ pub enum Orientation {
     LandscapeSwapped = 0xA0,
 }
 
+/// An error holding its source (pins or SPI)
+#[derive(Debug)]
+pub enum Error<SPIE, DCE, RSTE> {
+    Spi(SPIE),
+    Dc(DCE),
+    Rst(RSTE),
+}
+
 impl<SPI, DC, RST> ST7789<SPI, DC, RST>
 where
     SPI: spi::Write<u8>,
@@ -92,7 +100,10 @@ where
     /// # Arguments
     ///
     /// * `delay` - a delay provided for the MCU/MPU this is running on
-    pub fn init<DELAY>(&mut self, delay: &mut DELAY) -> Result<(), ()>
+    pub fn init<DELAY>(
+        &mut self,
+        delay: &mut DELAY,
+    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>>
     where
         DELAY: DelayMs<u8>,
     {
@@ -130,17 +141,21 @@ where
         Ok(())
     }
 
-    pub fn hard_reset(&mut self) -> Result<(), ()> {
-        self.rst.set_high().map_err(|_| ())?;
-        self.rst.set_low().map_err(|_| ())?;
-        self.rst.set_high().map_err(|_| ())
+    pub fn hard_reset(&mut self) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
+        self.rst.set_high().map_err(Error::Rst)?;
+        self.rst.set_low().map_err(Error::Rst)?;
+        self.rst.set_high().map_err(Error::Rst)
     }
 
-    fn write_command(&mut self, command: Instruction, params: Option<&[u8]>) -> Result<(), ()> {
-        self.dc.set_low().map_err(|_| ())?;
+    fn write_command(
+        &mut self,
+        command: Instruction,
+        params: Option<&[u8]>,
+    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
+        self.dc.set_low().map_err(Error::Dc)?;
         self.spi
             .write(&[command.to_u8().unwrap()])
-            .map_err(|_| ())?;
+            .map_err(Error::Spi)?;
         if let Some(params) = params {
             self.start_data()?;
             self.write_data(params)?;
@@ -148,20 +163,23 @@ where
         Ok(())
     }
 
-    fn start_data(&mut self) -> Result<(), ()> {
-        self.dc.set_high().map_err(|_| ())
+    fn start_data(&mut self) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
+        self.dc.set_high().map_err(Error::Dc)
     }
 
-    fn write_data(&mut self, data: &[u8]) -> Result<(), ()> {
-        self.spi.write(data).map_err(|_| ())
+    fn write_data(&mut self, data: &[u8]) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
+        self.spi.write(data).map_err(Error::Spi)
     }
 
     /// Writes a data word to the display.
-    fn write_word(&mut self, value: u16) -> Result<(), ()> {
+    fn write_word(&mut self, value: u16) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
         self.write_data(&value.to_be_bytes())
     }
 
-    pub fn set_orientation(&mut self, orientation: &Orientation) -> Result<(), ()> {
+    pub fn set_orientation(
+        &mut self,
+        orientation: &Orientation,
+    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
         if self.rgb {
             self.write_command(Instruction::MADCTL, Some(&[orientation.to_u8().unwrap()]))?;
         } else {
@@ -180,7 +198,13 @@ where
     }
 
     /// Sets the address window for the display.
-    fn set_address_window(&mut self, sx: u16, sy: u16, ex: u16, ey: u16) -> Result<(), ()> {
+    fn set_address_window(
+        &mut self,
+        sx: u16,
+        sy: u16,
+        ex: u16,
+        ey: u16,
+    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
         self.write_command(Instruction::CASET, None)?;
         self.start_data()?;
         self.write_word(sx + self.dx)?;
@@ -192,7 +216,12 @@ where
     }
 
     /// Sets a pixel color at the given coords.
-    pub fn set_pixel(&mut self, x: u16, y: u16, color: u16) -> Result<(), ()> {
+    pub fn set_pixel(
+        &mut self,
+        x: u16,
+        y: u16,
+        color: u16,
+    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
         self.set_address_window(x, y, x, y)?;
         self.write_command(Instruction::RAMWR, None)?;
         self.start_data()?;
