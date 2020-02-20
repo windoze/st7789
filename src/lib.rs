@@ -31,12 +31,6 @@ where
     /// Reset pin.
     rst: RST,
 
-    /// Whether the display is RGB (true) or BGR (false)
-    rgb: bool,
-
-    /// Whether the colours are inverted (true) or not (false)
-    inverted: bool,
-
     /// Screen size
     size_x: u16,
     size_y: u16,
@@ -49,13 +43,14 @@ where
 /// Display orientation.
 #[derive(ToPrimitive)]
 pub enum Orientation {
-    Portrait = 0x00,
-    Landscape = 0x60,
-    PortraitSwapped = 0xC0,
-    LandscapeSwapped = 0xA0,
+    Portrait = 0b00000000,
+    Landscape = 0b01100000,
+    PortraitSwapped = 0b11000000,
+    LandscapeSwapped = 0b10100000,
 }
 
 /// An error holding its source (pins or SPI)
+#[derive(Debug)]
 pub enum Error<SPIE, DCE, RSTE> {
     Spi(SPIE),
     Dc(DCE),
@@ -84,8 +79,6 @@ where
             spi,
             dc,
             rst,
-            rgb: true,
-            inverted: true,
             dx: 0,
             dy: 0,
             size_x,
@@ -107,36 +100,19 @@ where
         DELAY: DelayMs<u8>,
     {
         self.hard_reset()?;
-        self.write_command(Instruction::SWRESET, None)?;
-        delay.delay_ms(200);
-        self.write_command(Instruction::SLPOUT, None)?;
-        delay.delay_ms(200);
-        self.write_command(Instruction::FRMCTR1, Some(&[0x01, 0x2C, 0x2D]))?;
-        self.write_command(Instruction::FRMCTR2, Some(&[0x01, 0x2C, 0x2D]))?;
-        self.write_command(
-            Instruction::FRMCTR3,
-            Some(&[0x01, 0x2C, 0x2D, 0x01, 0x2C, 0x2D]),
-        )?;
-        self.write_command(Instruction::INVCTR, Some(&[0x07]))?;
-        self.write_command(Instruction::PWCTR1, Some(&[0xA2, 0x02, 0x84]))?;
-        self.write_command(Instruction::PWCTR2, Some(&[0xC5]))?;
-        self.write_command(Instruction::PWCTR3, Some(&[0x0A, 0x00]))?;
-        self.write_command(Instruction::PWCTR4, Some(&[0x8A, 0x2A]))?;
-        self.write_command(Instruction::PWCTR5, Some(&[0x8A, 0xEE]))?;
-        self.write_command(Instruction::VMCTR1, Some(&[0x0E]))?;
-        if self.inverted {
-            self.write_command(Instruction::INVON, None)?;
-        } else {
-            self.write_command(Instruction::INVOFF, None)?;
-        }
-        if self.rgb {
-            self.write_command(Instruction::MADCTL, Some(&[0x00]))?;
-        } else {
-            self.write_command(Instruction::MADCTL, Some(&[0x08]))?;
-        }
-        self.write_command(Instruction::COLMOD, Some(&[0x05]))?;
-        self.write_command(Instruction::DISPON, None)?;
-        delay.delay_ms(200);
+        self.write_command(Instruction::SWRESET, None)?; // reset display
+        delay.delay_ms(150);
+        self.write_command(Instruction::SLPOUT, None)?; // turn off sleep
+        delay.delay_ms(10);
+        self.write_command(Instruction::INVOFF, None)?; // turn off invert
+        self.write_command(Instruction::MADCTL, Some(&[0b00000000]))?; // left -> right, bottom -> top RGB
+        self.write_command(Instruction::COLMOD, Some(&[0b01010101]))?; // 16bit 65k colors
+        self.write_command(Instruction::INVON, None)?; // hack?
+        delay.delay_ms(10);
+        self.write_command(Instruction::NORON, None)?; // turn on display
+        delay.delay_ms(10);
+        self.write_command(Instruction::DISPON, None)?; // turn on display
+        delay.delay_ms(10);
         Ok(())
     }
 
@@ -175,18 +151,12 @@ where
         self.write_data(&value.to_be_bytes())
     }
 
+    /// Sets display orientation
     pub fn set_orientation(
         &mut self,
         orientation: &Orientation,
     ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
-        if self.rgb {
-            self.write_command(Instruction::MADCTL, Some(&[orientation.to_u8().unwrap()]))?;
-        } else {
-            self.write_command(
-                Instruction::MADCTL,
-                Some(&[orientation.to_u8().unwrap() | 0x08]),
-            )?;
-        }
+        self.write_command(Instruction::MADCTL, Some(&[orientation.to_u8().unwrap()]))?;
         Ok(())
     }
 

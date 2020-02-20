@@ -4,6 +4,8 @@ use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::{DrawTarget, Size};
 use embedded_graphics::primitives::Rectangle;
 use embedded_graphics::style::{PrimitiveStyle, Styled};
+use embedded_graphics::image::{Image, ImageDimensions, IntoPixelIter};
+use embedded_graphics::geometry::Dimensions;
 
 use embedded_hal::blocking::spi;
 use embedded_hal::digital::v2::OutputPin;
@@ -34,6 +36,31 @@ where
         let sy = item.primitive.top_left.y as u16;
         let ex = item.primitive.bottom_right.x as u16;
         let ey = item.primitive.bottom_right.y as u16;
+
+        self.set_address_window(sx, sy, ex, ey)?;
+        self.write_command(Instruction::RAMWR, None)?;
+        self.start_data()?;
+
+        for pixel in item.into_iter() {
+            let color = RawU16::from(pixel.1).into_inner();
+            self.write_word(color)?;
+        }
+
+        Ok(())
+    }
+
+    fn draw_image<'a, 'b, I>(
+        &mut self,
+        item: &'a Image<'b, I, Rgb565>
+    ) -> Result<(), Self::Error>
+    where
+        &'b I: IntoPixelIter<Rgb565>,
+        I: ImageDimensions,
+    {
+        let sx = item.top_left().x as u16;
+        let sy = item.top_left().y as u16;
+        let ex = (item.bottom_right().x - 1) as u16;
+        let ey = (item.bottom_right().y - 1) as u16;
 
         self.set_address_window(sx, sy, ex, ey)?;
         self.write_command(Instruction::RAMWR, None)?;
