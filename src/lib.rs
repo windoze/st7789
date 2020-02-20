@@ -12,6 +12,9 @@ use embedded_hal::blocking::delay::DelayMs;
 use embedded_hal::blocking::spi;
 use embedded_hal::digital::v2::OutputPin;
 
+#[cfg(feature = "graphics")]
+mod graphics;
+
 /// ST7789 driver to connect to TFT displays.
 pub struct ST7789<SPI, DC, RST>
 where
@@ -70,7 +73,7 @@ where
     /// * `size_y` - y axis resolution of the display in pixels
     ///
     pub fn new(spi: SPI, dc: DC, rst: RST, size_x: u16, size_y: u16) -> Self {
-        let display = ST7789 {
+        ST7789 {
             spi,
             dc,
             rst,
@@ -78,11 +81,9 @@ where
             inverted: true,
             dx: 0,
             dy: 0,
-            size_x: size_x,
-            size_y: size_y,
-        };
-
-        display
+            size_x,
+            size_y,
+        }
     }
 
     ///
@@ -140,9 +141,9 @@ where
         self.spi
             .write(&[command.to_u8().unwrap()])
             .map_err(|_| ())?;
-        if params.is_some() {
+        if let Some(params) = params {
             self.start_data()?;
-            self.write_data(params.unwrap())?;
+            self.write_data(params)?;
         }
         Ok(())
     }
@@ -196,54 +197,5 @@ where
         self.write_command(Instruction::RAMWR, None)?;
         self.start_data()?;
         self.write_word(color)
-    }
-}
-
-#[cfg(feature = "graphics")]
-extern crate embedded_graphics;
-#[cfg(feature = "graphics")]
-use self::embedded_graphics::{
-    drawable::Pixel, style::*, primitives::rectangle::Rectangle, pixelcolor::raw::*, pixelcolor::Rgb565, prelude::Size, DrawTarget,
-};
-
-#[cfg(feature = "graphics")]
-impl<SPI, DC, RST> DrawTarget<Rgb565> for ST7789<SPI, DC, RST>
-where
-    SPI: spi::Write<u8>,
-    DC: OutputPin,
-    RST: OutputPin,
-{
-    type Error = SPI::Error;
-
-    fn draw_pixel(&mut self, pixel: Pixel<Rgb565>) -> Result<(), Self::Error> {
-        let color = RawU16::from(pixel.1).into_inner();
-        let x = pixel.0.x as u16;
-        let y = pixel.0.y as u16;
-
-        self.set_pixel(x, y, color).expect("pixel write failed");
-
-        Ok(())
-    }
-
-    fn draw_rectangle(&mut self, item: &Styled<Rectangle, PrimitiveStyle<Rgb565>>) -> Result<(), Self::Error> {
-        let sx = item.primitive.top_left.x as u16;
-        let sy = item.primitive.top_left.y as u16;
-        let ex = item.primitive.bottom_right.x as u16;
-        let ey = item.primitive.bottom_right.y as u16;
-
-        self.set_address_window(sx, sy, ex, ey).unwrap(); // TODO
-        self.write_command(Instruction::RAMWR, None).unwrap(); // TODO
-        self.start_data().unwrap(); // TODO
-
-        for pixel in item.into_iter() {
-            let color = RawU16::from(pixel.1).into_inner();
-            self.write_word(color).unwrap(); // TODO
-        }
-
-        Ok(())
-    }
-
-    fn size(&self) -> Size {
-        Size::new(self.size_x.into(), self.size_y.into())
     }
 }

@@ -1,0 +1,55 @@
+use embedded_graphics::drawable::Pixel;
+use embedded_graphics::pixelcolor::raw::{RawData, RawU16};
+use embedded_graphics::pixelcolor::Rgb565;
+use embedded_graphics::prelude::{DrawTarget, Size};
+use embedded_graphics::primitives::Rectangle;
+use embedded_graphics::style::{PrimitiveStyle, Styled};
+
+use embedded_hal::blocking::spi;
+use embedded_hal::digital::v2::OutputPin;
+
+use crate::{Instruction, ST7789};
+
+impl<SPI, DC, RST> DrawTarget<Rgb565> for ST7789<SPI, DC, RST>
+where
+    SPI: spi::Write<u8>,
+    DC: OutputPin,
+    RST: OutputPin,
+{
+    type Error = SPI::Error;
+
+    fn draw_pixel(&mut self, pixel: Pixel<Rgb565>) -> Result<(), Self::Error> {
+        let color = RawU16::from(pixel.1).into_inner();
+        let x = pixel.0.x as u16;
+        let y = pixel.0.y as u16;
+
+        self.set_pixel(x, y, color).expect("pixel write failed");
+
+        Ok(())
+    }
+
+    fn draw_rectangle(
+        &mut self,
+        item: &Styled<Rectangle, PrimitiveStyle<Rgb565>>,
+    ) -> Result<(), Self::Error> {
+        let sx = item.primitive.top_left.x as u16;
+        let sy = item.primitive.top_left.y as u16;
+        let ex = item.primitive.bottom_right.x as u16;
+        let ey = item.primitive.bottom_right.y as u16;
+
+        self.set_address_window(sx, sy, ex, ey).unwrap(); // TODO
+        self.write_command(Instruction::RAMWR, None).unwrap(); // TODO
+        self.start_data().unwrap(); // TODO
+
+        for pixel in item.into_iter() {
+            let color = RawU16::from(pixel.1).into_inner();
+            self.write_word(color).unwrap(); // TODO
+        }
+
+        Ok(())
+    }
+
+    fn size(&self) -> Size {
+        Size::new(self.size_x.into(), self.size_y.into())
+    }
+}
