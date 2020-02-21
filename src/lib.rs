@@ -39,10 +39,10 @@ where
 /// Display orientation.
 #[derive(ToPrimitive)]
 pub enum Orientation {
-    Portrait = 0b00000000,
-    Landscape = 0b01100000,
-    PortraitSwapped = 0b11000000,
-    LandscapeSwapped = 0b10100000,
+    Portrait = 0b00000000,         // no inverting
+    Landscape = 0b01100000,        // invert column and page/column order
+    PortraitSwapped = 0b11000000,  // invert page and column order
+    LandscapeSwapped = 0b10100000, // invert page and page/column order
 }
 
 /// An error holding its source (pins or SPI)

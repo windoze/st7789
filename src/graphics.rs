@@ -1,11 +1,11 @@
 use embedded_graphics::drawable::Pixel;
+use embedded_graphics::geometry::Dimensions;
+use embedded_graphics::image::{Image, ImageDimensions, IntoPixelIter};
 use embedded_graphics::pixelcolor::raw::{RawData, RawU16};
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::{DrawTarget, Size};
 use embedded_graphics::primitives::Rectangle;
 use embedded_graphics::style::{PrimitiveStyle, Styled};
-use embedded_graphics::image::{Image, ImageDimensions, IntoPixelIter};
-use embedded_graphics::geometry::Dimensions;
 
 use embedded_hal::blocking::spi;
 use embedded_hal::digital::v2::OutputPin;
@@ -49,10 +49,7 @@ where
         Ok(())
     }
 
-    fn draw_image<'a, 'b, I>(
-        &mut self,
-        item: &'a Image<'b, I, Rgb565>
-    ) -> Result<(), Self::Error>
+    fn draw_image<'a, 'b, I>(&mut self, item: &'a Image<'b, I, Rgb565>) -> Result<(), Self::Error>
     where
         &'b I: IntoPixelIter<Rgb565>,
         I: ImageDimensions,
