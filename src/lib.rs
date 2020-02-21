@@ -34,10 +34,6 @@ where
     /// Screen size
     size_x: u16,
     size_y: u16,
-
-    /// Global image offset
-    dx: u16,
-    dy: u16,
 }
 
 /// Display orientation.
@@ -79,8 +75,6 @@ where
             spi,
             dc,
             rst,
-            dx: 0,
-            dy: 0,
             size_x,
             size_y,
         }
@@ -160,12 +154,6 @@ where
         Ok(())
     }
 
-    /// Sets the global offset of the displayed image
-    pub fn set_offset(&mut self, dx: u16, dy: u16) {
-        self.dx = dx;
-        self.dy = dy;
-    }
-
     /// Sets the address window for the display.
     fn set_address_window(
         &mut self,
@@ -176,12 +164,12 @@ where
     ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
         self.write_command(Instruction::CASET, None)?;
         self.start_data()?;
-        self.write_word(sx + self.dx)?;
-        self.write_word(ex + self.dx)?;
+        self.write_word(sx)?;
+        self.write_word(ex)?;
         self.write_command(Instruction::RASET, None)?;
         self.start_data()?;
-        self.write_word(sy + self.dy)?;
-        self.write_word(ey + self.dy)
+        self.write_word(sy)?;
+        self.write_word(ey)
     }
 
     /// Sets a pixel color at the given coords.
