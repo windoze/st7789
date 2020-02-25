@@ -34,10 +34,10 @@ where
     ) -> Result<(), Self::Error> {
         // filled rect can be rendered into frame window directly
         if item.style.fill_color.is_some() {
-            let sx = item.primitive.top_left.x as u16;
-            let sy = item.primitive.top_left.y as u16;
-            let ex = item.primitive.bottom_right.x as u16;
-            let ey = item.primitive.bottom_right.y as u16;
+            let sx = item.top_left().x as u16;
+            let sy = item.top_left().y as u16;
+            let ex = item.bottom_right().x as u16;
+            let ey = item.bottom_right().y as u16;
 
             self.set_address_window(sx, sy, ex, ey)?;
             self.write_command(Instruction::RAMWR, None)?;
@@ -51,6 +51,7 @@ where
 
             Ok(())
         } else if item.style.stroke_color.is_some() && item.style.stroke_width > 0 {
+            
             // TODO: construct rectangle as 4 frames
             self.draw_iter(item)
         } else { // if we don't know what this rect is, draw individual pixels
