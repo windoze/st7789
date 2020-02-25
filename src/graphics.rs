@@ -32,21 +32,30 @@ where
         &mut self,
         item: &Styled<Rectangle, PrimitiveStyle<Rgb565>>,
     ) -> Result<(), Self::Error> {
-        let sx = item.primitive.top_left.x as u16;
-        let sy = item.primitive.top_left.y as u16;
-        let ex = item.primitive.bottom_right.x as u16;
-        let ey = item.primitive.bottom_right.y as u16;
+        // filled rect can be rendered into frame window directly
+        if item.style.fill_color.is_some() {
+            let sx = item.primitive.top_left.x as u16;
+            let sy = item.primitive.top_left.y as u16;
+            let ex = item.primitive.bottom_right.x as u16;
+            let ey = item.primitive.bottom_right.y as u16;
 
-        self.set_address_window(sx, sy, ex, ey)?;
-        self.write_command(Instruction::RAMWR, None)?;
-        self.start_data()?;
+            self.set_address_window(sx, sy, ex, ey)?;
+            self.write_command(Instruction::RAMWR, None)?;
+            self.start_data()?;
 
-        for pixel in item.into_iter() {
-            let color = RawU16::from(pixel.1).into_inner();
-            self.write_word(color)?;
+            for pixel in item.into_iter() {
+                let color = Some(RawU16::from(pixel.1).into_inner());
+
+                self.write_word(color.unwrap())?;
+            }
+
+            Ok(())
+        } else if item.style.stroke_color.is_some() && item.style.stroke_width > 0 {
+            // TODO: construct rectangle as 4 frames
+            self.draw_iter(item)
+        } else { // if we don't know what this rect is, draw individual pixels
+            self.draw_iter(item)
         }
-
-        Ok(())
     }
 
     fn draw_image<'a, 'b, I>(&mut self, item: &'a Image<'b, I, Rgb565>) -> Result<(), Self::Error>
