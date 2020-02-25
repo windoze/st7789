@@ -10,7 +10,23 @@ use embedded_graphics::style::{PrimitiveStyle, Styled};
 use embedded_hal::blocking::spi;
 use embedded_hal::digital::v2::OutputPin;
 
-use crate::{Error, Instruction, ST7789};
+use crate::{Error, ST7789};
+
+impl<SPI, DC, RST> ST7789<SPI, DC, RST>
+where
+    SPI: spi::Write<u8>,
+    DC: OutputPin,
+    RST: OutputPin,
+{
+    fn fill_rect(&mut self, item: &dyn Dimensions, colors: &mut dyn Iterator<Item = u16>) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
+        let sx = item.top_left().x as u16;
+        let sy = item.top_left().y as u16;
+        let ex = item.bottom_right().x as u16;
+        let ey = item.bottom_right().y as u16;
+
+        self.set_pixels(sx, sy, ex, ey, colors)
+    }
+}
 
 impl<SPI, DC, RST> DrawTarget<Rgb565> for ST7789<SPI, DC, RST>
 where
@@ -34,24 +50,15 @@ where
     ) -> Result<(), Self::Error> {
         // filled rect can be rendered into frame window directly
         if item.style.fill_color.is_some() {
-            let sx = item.top_left().x as u16;
-            let sy = item.top_left().y as u16;
-            let ex = item.bottom_right().x as u16;
-            let ey = item.bottom_right().y as u16;
+            let mut colors = item.into_iter().map(|p| RawU16::from(p.1).into_inner());
 
-            self.set_address_window(sx, sy, ex, ey)?;
-            self.write_command(Instruction::RAMWR, None)?;
-            self.start_data()?;
-
-            for pixel in item.into_iter() {
-                let color = Some(RawU16::from(pixel.1).into_inner());
-
-                self.write_word(color.unwrap())?;
+            self.fill_rect(item, &mut colors)
+        } else if let Some(_color) = item.style.stroke_color {
+            if item.style.stroke_width == 0 {
+                return Ok(()); // nothing to draw
             }
+            // let sw = item.style.stroke_width as u16;
 
-            Ok(())
-        } else if item.style.stroke_color.is_some() && item.style.stroke_width > 0 {
-            
             // TODO: construct rectangle as 4 frames
             self.draw_iter(item)
         } else { // if we don't know what this rect is, draw individual pixels
@@ -64,21 +71,15 @@ where
         &'b I: IntoPixelIter<Rgb565>,
         I: ImageDimensions,
     {
+        // TODO: this is inconsistent in embedded-graphics between Rectangle and Image
+        // See: https://github.com/jamwaffles/embedded-graphics/issues/182
         let sx = item.top_left().x as u16;
         let sy = item.top_left().y as u16;
         let ex = (item.bottom_right().x - 1) as u16;
         let ey = (item.bottom_right().y - 1) as u16;
+        let mut colors = item.into_iter().map(|p| RawU16::from(p.1).into_inner());
 
-        self.set_address_window(sx, sy, ex, ey)?;
-        self.write_command(Instruction::RAMWR, None)?;
-        self.start_data()?;
-
-        for pixel in item.into_iter() {
-            let color = RawU16::from(pixel.1).into_inner();
-            self.write_word(color)?;
-        }
-
-        Ok(())
+        self.set_pixels(sx, sy, ex, ey, &mut colors)
     }
 
     fn size(&self) -> Size {
