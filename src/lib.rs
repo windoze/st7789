@@ -185,7 +185,14 @@ where
         self.write_word(color)
     }
 
-    pub fn set_pixels(&mut self, sx: u16, sy: u16, ex: u16, ey: u16, colors: &mut dyn Iterator<Item = u16>) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
+    pub fn set_pixels(
+        &mut self,
+        sx: u16,
+        sy: u16,
+        ex: u16,
+        ey: u16,
+        colors: &mut dyn Iterator<Item = u16>,
+    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
         self.set_address_window(sx, sy, ex, ey)?;
         self.write_command(Instruction::RAMWR, None)?;
         self.start_data()?;

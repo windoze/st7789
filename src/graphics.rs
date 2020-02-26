@@ -18,7 +18,11 @@ where
     DC: OutputPin,
     RST: OutputPin,
 {
-    fn fill_rect(&mut self, item: &dyn Dimensions, colors: &mut dyn Iterator<Item = u16>) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
+    fn fill_rect(
+        &mut self,
+        item: &dyn Dimensions,
+        colors: &mut dyn Iterator<Item = u16>,
+    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
         let sx = item.top_left().x as u16;
         let sy = item.top_left().y as u16;
         let ex = item.bottom_right().x as u16;
@@ -61,7 +65,8 @@ where
 
             // TODO: construct rectangle as 4 frames
             self.draw_iter(item)
-        } else { // if we don't know what this rect is, draw individual pixels
+        } else {
+            // if we don't know what this rect is, draw individual pixels
             self.draw_iter(item)
         }
     }
