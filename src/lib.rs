@@ -39,10 +39,10 @@ where
 /// Display orientation.
 #[derive(ToPrimitive)]
 pub enum Orientation {
-    Portrait = 0b00000000,         // no inverting
-    Landscape = 0b01100000,        // invert column and page/column order
-    PortraitSwapped = 0b11000000,  // invert page and column order
-    LandscapeSwapped = 0b10100000, // invert page and page/column order
+    Portrait = 0b0000_0000,         // no inverting
+    Landscape = 0b0110_0000,        // invert column and page/column order
+    PortraitSwapped = 0b1100_0000,  // invert page and column order
+    LandscapeSwapped = 0b1010_0000, // invert page and page/column order
 }
 
 /// An error holding its source (pins or SPI)
@@ -99,8 +99,8 @@ where
         self.write_command(Instruction::SLPOUT, None)?; // turn off sleep
         delay.delay_ms(10);
         self.write_command(Instruction::INVOFF, None)?; // turn off invert
-        self.write_command(Instruction::MADCTL, Some(&[0b00000000]))?; // left -> right, bottom -> top RGB
-        self.write_command(Instruction::COLMOD, Some(&[0b01010101]))?; // 16bit 65k colors
+        self.write_command(Instruction::MADCTL, Some(&[0b0000_0000]))?; // left -> right, bottom -> top RGB
+        self.write_command(Instruction::COLMOD, Some(&[0b0101_0101]))?; // 16bit 65k colors
         self.write_command(Instruction::INVON, None)?; // hack?
         delay.delay_ms(10);
         self.write_command(Instruction::NORON, None)?; // turn on display
