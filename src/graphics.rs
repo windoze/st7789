@@ -71,21 +71,21 @@ where
         }
     }
 
-    fn draw_image<'a, 'b, I>(&mut self, item: &'a Image<'b, I, Rgb565>) -> Result<(), Self::Error>
-    where
-        &'b I: IntoPixelIter<Rgb565>,
-        I: ImageDimensions,
-    {
-        // TODO: this is inconsistent in embedded-graphics between Rectangle and Image
-        // See: https://github.com/jamwaffles/embedded-graphics/issues/182
-        let sx = item.top_left().x as u16;
-        let sy = item.top_left().y as u16;
-        let ex = (item.bottom_right().x - 1) as u16;
-        let ey = (item.bottom_right().y - 1) as u16;
-        let mut colors = item.into_iter().map(|p| RawU16::from(p.1).into_inner());
+    // fn draw_image<'a, 'b, I>(&mut self, item: &'a Image<'b, I, Rgb565>) -> Result<(), Self::Error>
+    // where
+    //     &'b I: IntoPixelIter<Rgb565>,
+    //     I: ImageDimensions,
+    // {
+    //     // TODO: this is inconsistent in embedded-graphics between Rectangle and Image
+    //     // See: https://github.com/jamwaffles/embedded-graphics/issues/182
+    //     let sx = item.top_left().x as u16;
+    //     let sy = item.top_left().y as u16;
+    //     let ex = (item.bottom_right().x - 1) as u16;
+    //     let ey = (item.bottom_right().y - 1) as u16;
+    //     let mut colors = item.into_iter().map(|p| RawU16::from(p.1).into_inner());
 
-        self.set_pixels(sx, sy, ex, ey, &mut colors)
-    }
+    //     self.set_pixels(sx, sy, ex, ey, &mut colors)
+    // }
 
     fn size(&self) -> Size {
         Size::new(self.size_x.into(), self.size_y.into())
