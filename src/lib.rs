@@ -8,7 +8,7 @@ use crate::instruction::Instruction;
 use num_derive::ToPrimitive;
 use num_traits::ToPrimitive;
 
-use embedded_hal::blocking::delay::DelayMs;
+use embedded_hal::blocking::delay::DelayUs;
 use embedded_hal::blocking::spi;
 use embedded_hal::digital::v2::OutputPin;
 
@@ -16,11 +16,12 @@ use embedded_hal::digital::v2::OutputPin;
 mod graphics;
 
 /// ST7789 driver to connect to TFT displays.
-pub struct ST7789<SPI, DC, RST>
+pub struct ST7789<SPI, DC, RST, DELAY>
 where
     SPI: spi::Write<u8>,
     DC: OutputPin,
     RST: OutputPin,
+    DELAY: DelayUs<u32>,
 {
     /// SPI
     spi: SPI,
@@ -34,6 +35,9 @@ where
     /// Screen size
     size_x: u16,
     size_y: u16,
+
+    /// Delay provider
+    delay: DELAY,
 }
 
 /// Display orientation.
@@ -53,11 +57,12 @@ pub enum Error<SPIE, DCE, RSTE> {
     Rst(RSTE),
 }
 
-impl<SPI, DC, RST> ST7789<SPI, DC, RST>
+impl<SPI, DC, RST, DELAY> ST7789<SPI, DC, RST, DELAY>
 where
     SPI: spi::Write<u8>,
     DC: OutputPin,
     RST: OutputPin,
+    DELAY: DelayUs<u32>,
 {
     ///
     /// Creates a new ST7789 driver instance
@@ -69,14 +74,16 @@ where
     /// * `rst` - display hard reset pin
     /// * `size_x` - x axis resolution of the display in pixels
     /// * `size_y` - y axis resolution of the display in pixels
+    /// * `delay` - delay provider, required for proper RST and DC timings
     ///
-    pub fn new(spi: SPI, dc: DC, rst: RST, size_x: u16, size_y: u16) -> Self {
+    pub fn new(spi: SPI, dc: DC, rst: RST, size_x: u16, size_y: u16, delay: DELAY) -> Self {
         ST7789 {
             spi,
             dc,
             rst,
             size_x,
             size_y,
+            delay,
         }
     }
 
@@ -86,34 +93,33 @@ where
     /// # Arguments
     ///
     /// * `delay` - a delay provided for the MCU/MPU this is running on
-    pub fn init<DELAY>(
-        &mut self,
-        delay: &mut DELAY,
-    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>>
-    where
-        DELAY: DelayMs<u8>,
-    {
+    pub fn init(&mut self) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
         self.hard_reset()?;
         self.write_command(Instruction::SWRESET, None)?; // reset display
-        delay.delay_ms(150);
+        self.delay.delay_us(150_000);
         self.write_command(Instruction::SLPOUT, None)?; // turn off sleep
-        delay.delay_ms(10);
+        self.delay.delay_us(10_000);
         self.write_command(Instruction::INVOFF, None)?; // turn off invert
         self.write_command(Instruction::MADCTL, Some(&[0b0000_0000]))?; // left -> right, bottom -> top RGB
         self.write_command(Instruction::COLMOD, Some(&[0b0101_0101]))?; // 16bit 65k colors
         self.write_command(Instruction::INVON, None)?; // hack?
-        delay.delay_ms(10);
+        self.delay.delay_us(10_000);
         self.write_command(Instruction::NORON, None)?; // turn on display
-        delay.delay_ms(10);
+        self.delay.delay_us(10_000);
         self.write_command(Instruction::DISPON, None)?; // turn on display
-        delay.delay_ms(10);
+        self.delay.delay_us(10_000);
         Ok(())
     }
 
     pub fn hard_reset(&mut self) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
         self.rst.set_high().map_err(Error::Rst)?;
+        self.delay.delay_us(10); // ensure the pin change will get registered
         self.rst.set_low().map_err(Error::Rst)?;
-        self.rst.set_high().map_err(Error::Rst)
+        self.delay.delay_us(10); // ensure the pin change will get registered
+        self.rst.set_high().map_err(Error::Rst)?;
+        self.delay.delay_us(10); // ensure the pin change will get registered
+
+        Ok(())
     }
 
     fn write_command(
@@ -122,9 +128,12 @@ where
         params: Option<&[u8]>,
     ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
         self.dc.set_low().map_err(Error::Dc)?;
+        self.delay.delay_us(10); // ensure the pin change will get registered
+
         self.spi
             .write(&[command.to_u8().unwrap()])
             .map_err(Error::Spi)?;
+        
         if let Some(params) = params {
             self.start_data()?;
             self.write_data(params)?;
@@ -133,7 +142,10 @@ where
     }
 
     fn start_data(&mut self) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
-        self.dc.set_high().map_err(Error::Dc)
+        self.dc.set_high().map_err(Error::Dc)?;
+        self.delay.delay_us(10); // ensure the pin change will get registered
+
+        Ok(())
     }
 
     fn write_data(&mut self, data: &[u8]) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {

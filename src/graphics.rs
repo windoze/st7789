@@ -8,15 +8,17 @@ use embedded_graphics::primitives::Rectangle;
 use embedded_graphics::style::{PrimitiveStyle, Styled};
 
 use embedded_hal::blocking::spi;
+use embedded_hal::blocking::delay::DelayUs;
 use embedded_hal::digital::v2::OutputPin;
 
 use crate::{Error, ST7789};
 
-impl<SPI, DC, RST> ST7789<SPI, DC, RST>
+impl<SPI, DC, RST, DELAY> ST7789<SPI, DC, RST, DELAY>
 where
     SPI: spi::Write<u8>,
     DC: OutputPin,
     RST: OutputPin,
+    DELAY: DelayUs<u32>,
 {
     fn fill_rect(
         &mut self,
@@ -32,11 +34,12 @@ where
     }
 }
 
-impl<SPI, DC, RST> DrawTarget<Rgb565> for ST7789<SPI, DC, RST>
+impl<SPI, DC, RST, DELAY> DrawTarget<Rgb565> for ST7789<SPI, DC, RST, DELAY>
 where
     SPI: spi::Write<u8>,
     DC: OutputPin,
     RST: OutputPin,
+    DELAY: DelayUs<u32>,
 {
     type Error = Error<SPI::Error, DC::Error, RST::Error>;
 
