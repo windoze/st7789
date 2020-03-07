@@ -7,8 +7,8 @@ use embedded_graphics::prelude::{DrawTarget, Size};
 use embedded_graphics::primitives::Rectangle;
 use embedded_graphics::style::{PrimitiveStyle, Styled};
 
-use embedded_hal::blocking::spi;
 use embedded_hal::blocking::delay::DelayUs;
+use embedded_hal::blocking::spi;
 use embedded_hal::digital::v2::OutputPin;
 
 use crate::{Error, ST7789};

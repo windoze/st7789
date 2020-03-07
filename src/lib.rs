@@ -15,7 +15,9 @@ use embedded_hal::digital::v2::OutputPin;
 #[cfg(feature = "graphics")]
 mod graphics;
 
+///
 /// ST7789 driver to connect to TFT displays.
+///
 pub struct ST7789<SPI, DC, RST, DELAY>
 where
     SPI: spi::Write<u8>,
@@ -23,24 +25,26 @@ where
     RST: OutputPin,
     DELAY: DelayUs<u32>,
 {
-    /// SPI
+    // SPI
     spi: SPI,
 
-    /// Data/command pin.
+    // Data/command pin.
     dc: DC,
 
-    /// Reset pin.
+    // Reset pin.
     rst: RST,
 
-    /// Screen size
+    // Screen size
     size_x: u16,
     size_y: u16,
 
-    /// Delay provider
+    // Delay provider
     delay: DELAY,
 }
 
+///
 /// Display orientation.
+///
 #[derive(ToPrimitive)]
 pub enum Orientation {
     Portrait = 0b0000_0000,         // no inverting
@@ -49,7 +53,9 @@ pub enum Orientation {
     LandscapeSwapped = 0b1010_0000, // invert page and page/column order
 }
 
+///
 /// An error holding its source (pins or SPI)
+///
 #[derive(Debug)]
 pub enum Error<SPIE, DCE, RSTE> {
     Spi(SPIE),
@@ -90,9 +96,6 @@ where
     ///
     /// Runs commands to initialize the display
     ///
-    /// # Arguments
-    ///
-    /// * `delay` - a delay provided for the MCU/MPU this is running on
     pub fn init(&mut self) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
         self.hard_reset()?;
         self.write_command(Instruction::SWRESET, None)?; // reset display
@@ -111,6 +114,9 @@ where
         Ok(())
     }
 
+    ///
+    /// Performs a hard reset using the RST pin sequence
+    ///
     pub fn hard_reset(&mut self) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
         self.rst.set_high().map_err(Error::Rst)?;
         self.delay.delay_us(10); // ensure the pin change will get registered
@@ -118,6 +124,68 @@ where
         self.delay.delay_us(10); // ensure the pin change will get registered
         self.rst.set_high().map_err(Error::Rst)?;
         self.delay.delay_us(10); // ensure the pin change will get registered
+
+        Ok(())
+    }
+
+    ///
+    /// Sets display orientation
+    ///
+    pub fn set_orientation(
+        &mut self,
+        orientation: &Orientation,
+    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
+        self.write_command(Instruction::MADCTL, Some(&[orientation.to_u8().unwrap()]))?;
+        Ok(())
+    }
+
+    ///
+    /// Sets a pixel color at the given coords.
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - x coordinate
+    /// * `y` - y coordinate
+    /// * `color` - the Rgb565 color value
+    ///
+    pub fn set_pixel(
+        &mut self,
+        x: u16,
+        y: u16,
+        color: u16,
+    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
+        self.set_address_window(x, y, x, y)?;
+        self.write_command(Instruction::RAMWR, None)?;
+        self.start_data()?;
+        self.write_word(color)
+    }
+
+    ///
+    /// Sets pixel colors in given rectangle bounds.
+    ///
+    /// # Arguments
+    ///
+    /// * `sx` - x coordinate start
+    /// * `sy` - y coordinate start
+    /// * `ex` - x coordinate end
+    /// * `ey` - y coordinate end
+    /// * `colors` - the Rgb565 colors iterator for area pixels
+    ///
+    pub fn set_pixels(
+        &mut self,
+        sx: u16,
+        sy: u16,
+        ex: u16,
+        ey: u16,
+        colors: &mut dyn Iterator<Item = u16>,
+    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
+        self.set_address_window(sx, sy, ex, ey)?;
+        self.write_command(Instruction::RAMWR, None)?;
+        self.start_data()?;
+
+        for color in colors {
+            self.write_word(color)?;
+        }
 
         Ok(())
     }
@@ -133,7 +201,7 @@ where
         self.spi
             .write(&[command.to_u8().unwrap()])
             .map_err(Error::Spi)?;
-        
+
         if let Some(params) = params {
             self.start_data()?;
             self.write_data(params)?;
@@ -152,21 +220,12 @@ where
         self.spi.write(data).map_err(Error::Spi)
     }
 
-    /// Writes a data word to the display.
+    // Writes a data word to the display.
     fn write_word(&mut self, value: u16) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
         self.write_data(&value.to_be_bytes())
     }
 
-    /// Sets display orientation
-    pub fn set_orientation(
-        &mut self,
-        orientation: &Orientation,
-    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
-        self.write_command(Instruction::MADCTL, Some(&[orientation.to_u8().unwrap()]))?;
-        Ok(())
-    }
-
-    /// Sets the address window for the display.
+    // Sets the address window for the display.
     fn set_address_window(
         &mut self,
         sx: u16,
@@ -182,37 +241,5 @@ where
         self.start_data()?;
         self.write_word(sy)?;
         self.write_word(ey)
-    }
-
-    /// Sets a pixel color at the given coords.
-    pub fn set_pixel(
-        &mut self,
-        x: u16,
-        y: u16,
-        color: u16,
-    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
-        self.set_address_window(x, y, x, y)?;
-        self.write_command(Instruction::RAMWR, None)?;
-        self.start_data()?;
-        self.write_word(color)
-    }
-
-    pub fn set_pixels(
-        &mut self,
-        sx: u16,
-        sy: u16,
-        ex: u16,
-        ey: u16,
-        colors: &mut dyn Iterator<Item = u16>,
-    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
-        self.set_address_window(sx, sy, ex, ey)?;
-        self.write_command(Instruction::RAMWR, None)?;
-        self.start_data()?;
-
-        for color in colors {
-            self.write_word(color)?;
-        }
-
-        Ok(())
     }
 }
