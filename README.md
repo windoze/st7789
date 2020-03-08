@@ -18,5 +18,4 @@ These features are enabled by default
 
 ## Roadmap
 
-* `v0.3.0` - additional PixelColor support directly to hardware
 * `vTBD`   - hardware scolling support
