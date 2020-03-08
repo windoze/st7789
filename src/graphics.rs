@@ -95,9 +95,9 @@ where
         let sy = item.top_left().y as u16;
         let ex = (item.bottom_right().x - 1) as u16;
         let ey = (item.bottom_right().y - 1) as u16;
-        let mut colors = item.into_iter().map(|p| RawU16::from(p.1).into_inner());
+        let colors = item.into_iter().map(|p| RawU16::from(p.1).into_inner());
 
-        self.set_pixels(sx, sy, ex, ey, &mut colors)
+        self.set_pixels(sx, sy, ex, ey, colors)
     }
 
     fn size(&self) -> Size {

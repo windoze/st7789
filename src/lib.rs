@@ -1,5 +1,4 @@
 #![no_std]
-
 // associated re-typing not supported in rust yet
 #![allow(clippy::type_complexity)]
 
@@ -175,16 +174,19 @@ where
     /// * `sy` - y coordinate start
     /// * `ex` - x coordinate end
     /// * `ey` - y coordinate end
-    /// * `colors` - the Rgb565 colors iterator for area pixels
+    /// * `colors` - anything that can provide `IntoIterator<Item = u16>` to iterate over pixel data
     ///
-    pub fn set_pixels(
+    pub fn set_pixels<T>(
         &mut self,
         sx: u16,
         sy: u16,
         ex: u16,
         ey: u16,
-        colors: &mut dyn Iterator<Item = u16>,
-    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
+        colors: T,
+    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>>
+    where
+        T: IntoIterator<Item = u16>,
+    {
         self.set_address_window(sx, sy, ex, ey)?;
         self.write_command(Instruction::RAMWR, None)?;
         self.start_data()?;

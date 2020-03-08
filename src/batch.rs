@@ -59,7 +59,7 @@ where
                 y_top as u16,
                 x_right as u16,
                 y_bottom as u16,
-                &mut colors.into_iter(),
+                colors,
             )?;
 
             //  Dump out the Pixel Blocks for the square in test_display()
