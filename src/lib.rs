@@ -15,6 +15,9 @@ use embedded_hal::digital::v2::OutputPin;
 #[cfg(feature = "graphics")]
 mod graphics;
 
+#[cfg(feature = "batch")]
+mod batch;
+
 ///
 /// ST7789 driver to connect to TFT displays.
 ///

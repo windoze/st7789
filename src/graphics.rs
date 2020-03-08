@@ -51,6 +51,16 @@ where
         self.set_pixel(x, y, color)
     }
 
+    #[cfg(feature = "batch")]
+    fn draw_iter<T>(&mut self, item: T) -> Result<(), Self::Error>
+    where
+        T: IntoIterator<Item = Pixel<Rgb565>>,
+    {
+        use crate::batch::DrawBatch;
+
+        self.draw_batch(item)
+    }
+
     fn draw_rectangle(
         &mut self,
         item: &Styled<Rectangle, PrimitiveStyle<Rgb565>>,
