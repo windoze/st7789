@@ -1,5 +1,8 @@
 #![no_std]
 
+// associated re-typing not supported in rust yet
+#![allow(clippy::type_complexity)]
+
 //! This crate provides a ST7789 driver to connect to TFT displays.
 
 pub mod instruction;
