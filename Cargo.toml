@@ -6,6 +6,7 @@ authors = ["Ales Katona <almindor@gmail.com>", "Paul Sajna <sajattack@gmail.com>
 edition = "2018"
 license = "MIT"
 repository = "https://github.com/almindor/st7789"
+keywords = ["embedded-hal-driver", "st7789", "display"]
 readme = "README.md"
 documentation = "https://docs.rs/st7789"
 
