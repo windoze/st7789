@@ -30,6 +30,7 @@ optional = true
 version = "0.5.3"
 
 [features]
-default = ["graphics", "batch"]
+default = ["graphics", "batch", "buffer"]
 graphics = ["embedded-graphics"]
 batch = ["heapless"]
+buffer = []

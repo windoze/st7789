@@ -191,8 +191,49 @@ where
         self.write_command(Instruction::RAMWR, None)?;
         self.start_data()?;
 
+        self.write_pixels(colors)
+    }
+
+    #[cfg(not(feature = "buffer"))]
+    fn write_pixels<T>(
+        &mut self,
+        colors: T,
+    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>>
+    where
+        T: IntoIterator<Item = u16>,
+    {
         for color in colors {
             self.write_word(color)?;
+        }
+
+        Ok(())
+    }
+
+    #[cfg(feature = "buffer")]
+    fn write_pixels<T>(
+        &mut self,
+        colors: T,
+    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>>
+    where
+        T: IntoIterator<Item = u16>,
+    { 
+        let mut buf = [0; 128];
+        let mut i = 0;
+
+        for color in colors {
+            let word = color.to_be_bytes();
+            buf[i] = word[0];
+            buf[i + 1] = word[1];
+            i += 2;
+
+            if i == buf.len() {
+                self.write_data(&buf)?;
+                i = 0;
+            }
+        }
+
+        if i > 0 {
+            self.write_data(&buf[..i])?;
         }
 
         Ok(())
