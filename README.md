@@ -14,9 +14,10 @@ These features are enabled by default
 
 ## Changelog
 
-* `v0.1.0` - initial release
-* `v0.2.0` - batch support
+* `v0.2.2` - add buffering for SPI transfers
 * `v0.2.1` - use static dispatch for `set_pixels`
+* `v0.2.0` - batch support
+* `v0.1.0` - initial release
 
 ## Roadmap
 
