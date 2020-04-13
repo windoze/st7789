@@ -103,4 +103,14 @@ where
     fn size(&self) -> Size {
         Size::new(self.size_x.into(), self.size_y.into())
     }
+
+    fn clear(&mut self, color: Rgb565) -> Result<(), Self::Error>
+    where
+        Self: Sized,
+    {
+        let colors = core::iter::repeat(RawU16::from(color).into_inner())
+            .take(self.size_x as usize * self.size_y as usize);
+
+        self.set_pixels(0, 0, self.size_x - 1, self.size_y - 1, colors)
+    }
 }
