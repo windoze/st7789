@@ -11,7 +11,7 @@ use embedded_hal::digital::v2::OutputPin;
 
 pub trait DrawBatch<DI, RST, T, PinE>
 where
-    DI: WriteOnlyDataCommand,
+    DI: WriteOnlyDataCommand<u8>,
     RST: OutputPin<Error = PinE>,
     T: IntoIterator<Item = Pixel<Rgb565>>,
 {
@@ -20,7 +20,7 @@ where
 
 impl<DI, RST, T, PinE> DrawBatch<DI, RST, T, PinE> for ST7789<DI, RST>
 where
-    DI: WriteOnlyDataCommand,
+    DI: WriteOnlyDataCommand<u8>,
     RST: OutputPin<Error = PinE>,
     T: IntoIterator<Item = Pixel<Rgb565>>,
 {

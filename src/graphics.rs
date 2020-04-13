@@ -14,7 +14,7 @@ use display_interface::WriteOnlyDataCommand;
 
 impl<DI, RST, PinE> ST7789<DI, RST>
 where
-    DI: WriteOnlyDataCommand,
+    DI: WriteOnlyDataCommand<u8>,
     RST: OutputPin<Error = PinE>,
 {
     fn fill_rect(
@@ -33,7 +33,7 @@ where
 
 impl<DI, RST, PinE> DrawTarget<Rgb565> for ST7789<DI, RST>
 where
-    DI: WriteOnlyDataCommand,
+    DI: WriteOnlyDataCommand<u8>,
     RST: OutputPin<Error = PinE>,
 {
     type Error = Error<PinE>;
