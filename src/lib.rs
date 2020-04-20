@@ -99,10 +99,7 @@ where
     ///
     /// # Arguments
     ///
-    /// * `spi` - an SPI interface to use for talking to the display
     /// * `di` - a display interface for talking with the display
-    /// * `csx` - the chip select pin documented in the datasheet
-    /// * `dc` - data/clock pin switch
     /// * `rst` - display hard reset pin
     /// * `size_x` - x axis resolution of the display in pixels
     /// * `size_y` - y axis resolution of the display in pixels
@@ -118,6 +115,10 @@ where
 
     ///
     /// Runs commands to initialize the display
+    ///
+    /// # Arguments
+    ///
+    /// * `delay_source` - mutable reference to a delay provider
     ///
     pub fn init(&mut self, delay_source: &mut impl DelayUs<u32>) -> Result<(), Error<PinE>> {
         self.hard_reset(delay_source)?;
@@ -139,6 +140,10 @@ where
 
     ///
     /// Performs a hard reset using the RST pin sequence
+    ///
+    /// # Arguments
+    ///
+    /// * `delay_source` - mutable reference to a delay provider
     ///
     pub fn hard_reset(&mut self, delay_source: &mut impl DelayUs<u32>) -> Result<(), Error<PinE>> {
         self.rst.set_high().map_err(Error::Pin)?;
