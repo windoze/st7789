@@ -210,7 +210,10 @@ impl<P: Iterator<Item = Pixel<Rgb565>>> Iterator for RowIterator<P> {
                         continue;
                     }
                     //  If this pixel is adjacent to the previous pixel, add to the row.
-                    if x == self.x_right.wrapping_add(1) && y == self.y && self.colors.push(color).is_ok() {
+                    if x == self.x_right.wrapping_add(1)
+                        && y == self.y
+                        && self.colors.push(color).is_ok()
+                    {
                         // Don't add pixel if too many pixels in the row.
                         self.x_right = x;
                         continue;
