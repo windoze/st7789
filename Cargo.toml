@@ -1,7 +1,7 @@
 [package]
 name = "st7789"
 description = "ST7789 TFT LCD driver with embedded-graphics support"
-version = "0.2.3"
+version = "0.3.0"
 authors = ["Ales Katona <almindor@gmail.com>", "Paul Sajna <sajattack@gmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -11,7 +11,7 @@ readme = "README.md"
 documentation = "https://docs.rs/st7789"
 
 [dependencies]
-display-interface = { version = "0.2" }
+display-interface = "0.2"
 display-interface-spi = "0.2.0"
 embedded-hal = "0.2"
 nb = "0.1"

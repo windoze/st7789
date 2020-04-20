@@ -24,6 +24,7 @@ These features are enabled by default:
 
 ## Changelog
 
+* `v0.3.0` - use `display-interface`
 * `v0.2.3` - add optimized clear()
 * `v0.2.2` - add buffering for SPI transfers
 * `v0.2.1` - use static dispatch for `set_pixels`
