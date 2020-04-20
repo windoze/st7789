@@ -2,41 +2,29 @@
 //! Batch the pixels to be rendered into Pixel Rows and Pixel Blocks (contiguous Pixel Rows).
 //! This enables the pixels to be rendered efficiently as Pixel Blocks, which may be transmitted in a single Non-Blocking SPI request.
 use crate::{Error, ST7789};
+use display_interface::WriteOnlyDataCommand;
 use embedded_graphics::{
     pixelcolor::{raw::RawU16, Rgb565},
     prelude::*,
 };
-use embedded_hal::{
-    blocking::{delay::DelayUs, spi},
-    digital::v2::OutputPin,
-};
+use embedded_hal::digital::v2::OutputPin;
 
-pub trait DrawBatch<SPI, DC, RST, DELAY, T>
+pub trait DrawBatch<DI, RST, T, PinE>
 where
-    SPI: spi::Write<u8>,
-    DC: OutputPin,
-    RST: OutputPin,
-    DELAY: DelayUs<u32>,
+    DI: WriteOnlyDataCommand<u8>,
+    RST: OutputPin<Error = PinE>,
     T: IntoIterator<Item = Pixel<Rgb565>>,
 {
-    fn draw_batch(
-        &mut self,
-        item_pixels: T,
-    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>>;
+    fn draw_batch(&mut self, item_pixels: T) -> Result<(), Error<PinE>>;
 }
 
-impl<SPI, DC, RST, DELAY, T> DrawBatch<SPI, DC, RST, DELAY, T> for ST7789<SPI, DC, RST, DELAY>
+impl<DI, RST, T, PinE> DrawBatch<DI, RST, T, PinE> for ST7789<DI, RST>
 where
-    SPI: spi::Write<u8>,
-    DC: OutputPin,
-    RST: OutputPin,
-    DELAY: DelayUs<u32>,
+    DI: WriteOnlyDataCommand<u8>,
+    RST: OutputPin<Error = PinE>,
     T: IntoIterator<Item = Pixel<Rgb565>>,
 {
-    fn draw_batch(
-        &mut self,
-        item_pixels: T,
-    ) -> Result<(), Error<SPI::Error, DC::Error, RST::Error>> {
+    fn draw_batch(&mut self, item_pixels: T) -> Result<(), Error<PinE>> {
         //  Get the pixels for the item to be rendered.
         let pixels = item_pixels.into_iter();
         //  Batch the pixels into Pixel Rows.
@@ -222,8 +210,8 @@ impl<P: Iterator<Item = Pixel<Rgb565>>> Iterator for RowIterator<P> {
                         continue;
                     }
                     //  If this pixel is adjacent to the previous pixel, add to the row.
-                    if x == self.x_right + 1 && y == self.y && self.colors.push(color).is_ok() {
-                        //  Don't add pixel if too many pixels in the row.
+                    if x == self.x_right.wrapping_add(1) && y == self.y && self.colors.push(color).is_ok() {
+                        // Don't add pixel if too many pixels in the row.
                         self.x_right = x;
                         continue;
                     }
