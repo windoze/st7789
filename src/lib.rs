@@ -23,7 +23,9 @@ mod graphics;
 #[cfg(feature = "batch")]
 mod batch;
 
+///
 /// Convenience function for creating a new display driver with SPI
+///
 /// # Arguments
 ///
 /// * `spi` - an SPI interface to use for talking to the display
@@ -33,6 +35,10 @@ mod batch;
 /// * `size_x` - x axis resolution of the display in pixels
 /// * `size_y` - y axis resolution of the display in pixels
 ///
+#[deprecated(
+    since = "0.3.1",
+    note = "Please use ST7789::new, this function will be removed in v0.4"
+)]
 pub fn new_display_driver<SPI, CSX, DC, RST>(
     spi: SPI,
     csx: CSX,
