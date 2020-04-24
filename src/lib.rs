@@ -122,18 +122,20 @@ where
     ///
     pub fn init(&mut self, delay_source: &mut impl DelayUs<u32>) -> Result<(), Error<PinE>> {
         self.hard_reset(delay_source)?;
-        self.write_command(Instruction::SWRESET, None)?; // reset display
+        self.write_command(Instruction::SWRESET)?; // reset display
         delay_source.delay_us(150_000);
-        self.write_command(Instruction::SLPOUT, None)?; // turn off sleep
+        self.write_command(Instruction::SLPOUT)?; // turn off sleep
         delay_source.delay_us(10_000);
-        self.write_command(Instruction::INVOFF, None)?; // turn off invert
-        self.write_command(Instruction::MADCTL, Some(&[0b0000_0000]))?; // left -> right, bottom -> top RGB
-        self.write_command(Instruction::COLMOD, Some(&[0b0101_0101]))?; // 16bit 65k colors
-        self.write_command(Instruction::INVON, None)?; // hack?
+        self.write_command(Instruction::INVOFF)?; // turn off invert
+        self.write_command(Instruction::MADCTL)?; // left -> right, bottom -> top RGB
+        self.write_data(&[0b0000_0000])?;
+        self.write_command(Instruction::COLMOD)?; // 16bit 65k colors
+        self.write_data(&[0b0101_0101])?;
+        self.write_command(Instruction::INVON)?; // hack?
         delay_source.delay_us(10_000);
-        self.write_command(Instruction::NORON, None)?; // turn on display
+        self.write_command(Instruction::NORON)?; // turn on display
         delay_source.delay_us(10_000);
-        self.write_command(Instruction::DISPON, None)?; // turn on display
+        self.write_command(Instruction::DISPON)?; // turn on display
         delay_source.delay_us(10_000);
         Ok(())
     }
@@ -161,7 +163,8 @@ where
     ///
     pub fn set_orientation(&mut self, orientation: &Orientation) -> Result<(), Error<PinE>> {
         let orientation = orientation.to_u8().unwrap_or(0);
-        self.write_command(Instruction::MADCTL, Some(&[orientation]))?;
+        self.write_command(Instruction::MADCTL)?;
+        self.write_data(&[orientation])?;
         Ok(())
     }
 
@@ -176,7 +179,7 @@ where
     ///
     pub fn set_pixel(&mut self, x: u16, y: u16, color: u16) -> Result<(), Error<PinE>> {
         self.set_address_window(x, y, x, y)?;
-        self.write_command(Instruction::RAMWR, None)?;
+        self.write_command(Instruction::RAMWR)?;
         self.write_word(color)
     }
 
@@ -203,7 +206,7 @@ where
         T: IntoIterator<Item = u16>,
     {
         self.set_address_window(sx, sy, ex, ey)?;
-        self.write_command(Instruction::RAMWR, None)?;
+        self.write_command(Instruction::RAMWR)?;
         self.write_pixels(colors)
     }
 
@@ -246,19 +249,10 @@ where
         Ok(())
     }
 
-    fn write_command(
-        &mut self,
-        command: Instruction,
-        params: Option<&[u8]>,
-    ) -> Result<(), Error<PinE>> {
+    fn write_command(&mut self, command: Instruction) -> Result<(), Error<PinE>> {
         self.di
             .send_commands(&[command.to_u8().unwrap()])
             .map_err(|_| Error::DisplayError)?;
-
-        if let Some(params) = params {
-            self.di.send_data(params).map_err(|_| Error::DisplayError)?;
-        }
-
         Ok(())
     }
 
@@ -280,10 +274,10 @@ where
         ex: u16,
         ey: u16,
     ) -> Result<(), Error<PinE>> {
-        self.write_command(Instruction::CASET, None)?;
+        self.write_command(Instruction::CASET)?;
         self.write_word(sx)?;
         self.write_word(ex)?;
-        self.write_command(Instruction::RASET, None)?;
+        self.write_command(Instruction::RASET)?;
         self.write_word(sy)?;
         self.write_word(ey)
     }
