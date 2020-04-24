@@ -7,8 +7,6 @@
 pub mod instruction;
 
 use crate::instruction::Instruction;
-use num_derive::ToPrimitive;
-use num_traits::ToPrimitive;
 
 use display_interface_spi::SPIInterface;
 
@@ -78,7 +76,8 @@ where
 ///
 /// Display orientation.
 ///
-#[derive(ToPrimitive)]
+#[repr(u8)]
+#[derive(Copy, Clone)]
 pub enum Orientation {
     Portrait = 0b0000_0000,         // no inverting
     Landscape = 0b0110_0000,        // invert column and page/column order
@@ -166,8 +165,7 @@ where
     /// Sets display orientation
     ///
     pub fn set_orientation(&mut self, orientation: &Orientation) -> Result<(), Error<PinE>> {
-        let orientation = orientation.to_u8().unwrap_or(0);
-        self.write_command(Instruction::MADCTL, Some(&[orientation]))?;
+        self.write_command(Instruction::MADCTL, Some(&[*orientation as u8]))?;
         Ok(())
     }
 
@@ -258,7 +256,7 @@ where
         params: Option<&[u8]>,
     ) -> Result<(), Error<PinE>> {
         self.di
-            .send_commands(&[command.to_u8().unwrap()])
+            .send_commands(&[command as u8])
             .map_err(|_| Error::DisplayError)?;
 
         if let Some(params) = params {
