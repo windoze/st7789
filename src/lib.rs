@@ -167,9 +167,8 @@ where
     /// Sets display orientation
     ///
     pub fn set_orientation(&mut self, orientation: &Orientation) -> Result<(), Error<PinE>> {
-        let orientation = orientation.to_u8().unwrap_or(0);
         self.write_command(Instruction::MADCTL)?;
-        self.write_data(&[orientation])?;
+        self.write_data(&[*orientation as u8])?;
         Ok(())
     }
 
