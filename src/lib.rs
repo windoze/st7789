@@ -7,8 +7,6 @@
 pub mod instruction;
 
 use crate::instruction::Instruction;
-use num_derive::ToPrimitive;
-use num_traits::ToPrimitive;
 
 use display_interface_spi::SPIInterface;
 
@@ -23,7 +21,9 @@ mod graphics;
 #[cfg(feature = "batch")]
 mod batch;
 
+///
 /// Convenience function for creating a new display driver with SPI
+///
 /// # Arguments
 ///
 /// * `spi` - an SPI interface to use for talking to the display
@@ -33,6 +33,10 @@ mod batch;
 /// * `size_x` - x axis resolution of the display in pixels
 /// * `size_y` - y axis resolution of the display in pixels
 ///
+#[deprecated(
+    since = "0.3.1",
+    note = "Please use ST7789::new, this function will be removed in v0.4"
+)]
 pub fn new_display_driver<SPI, CSX, DC, RST>(
     spi: SPI,
     csx: CSX,
@@ -72,7 +76,8 @@ where
 ///
 /// Display orientation.
 ///
-#[derive(ToPrimitive)]
+#[repr(u8)]
+#[derive(Copy, Clone)]
 pub enum Orientation {
     Portrait = 0b0000_0000,         // no inverting
     Landscape = 0b0110_0000,        // invert column and page/column order
@@ -251,7 +256,7 @@ where
 
     fn write_command(&mut self, command: Instruction) -> Result<(), Error<PinE>> {
         self.di
-            .send_commands(&[command.to_u8().unwrap()])
+            .send_commands(&[command as u8])
             .map_err(|_| Error::DisplayError)?;
         Ok(())
     }

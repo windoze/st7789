@@ -1,7 +1,5 @@
-use num_derive::ToPrimitive;
-
 /// ST7789 instructions.
-#[derive(ToPrimitive)]
+#[repr(u8)]
 pub enum Instruction {
     NOP = 0x00,
     SWRESET = 0x01,
