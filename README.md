@@ -24,6 +24,7 @@ These features are enabled by default:
 
 ## Changelog
 
+* `v0.3.1` - deprecate `new_display_driver`, fix docs
 * `v0.3.0` - use `display-interface`
 * `v0.2.3` - add optimized clear()
 * `v0.2.2` - add buffering for SPI transfers
