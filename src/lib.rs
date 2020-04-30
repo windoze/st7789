@@ -60,7 +60,7 @@ where
 ///
 pub struct ST7789<DI, RST>
 where
-    DI: WriteOnlyDataCommand<u8>,
+    DI: WriteOnlyDataCommand<Width = u8>,
     RST: OutputPin,
 {
     // Display interface
@@ -96,7 +96,7 @@ pub enum Error<PinE> {
 
 impl<DI, RST, PinE> ST7789<DI, RST>
 where
-    DI: WriteOnlyDataCommand<u8>,
+    DI: WriteOnlyDataCommand<Width = u8>,
     RST: OutputPin<Error = PinE>,
 {
     ///
