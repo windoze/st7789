@@ -224,7 +224,9 @@ where
     }
 
     fn write_data(&mut self, data: &[u8]) -> Result<(), Error<PinE>> {
-        self.di.send_data(data.into()).map_err(|_| Error::DisplayError)?;
+        self.di
+            .send_data(data.into())
+            .map_err(|_| Error::DisplayError)?;
         Ok(())
     }
 
