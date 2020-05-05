@@ -23,7 +23,7 @@ mod batch;
 ///
 pub struct ST7789<DI, RST>
 where
-    DI: WriteOnlyDataCommand<Width = u8>,
+    DI: WriteOnlyDataCommand,
     RST: OutputPin,
 {
     // Display interface
@@ -59,7 +59,7 @@ pub enum Error<PinE> {
 
 impl<DI, RST, PinE> ST7789<DI, RST>
 where
-    DI: WriteOnlyDataCommand<Width = u8>,
+    DI: WriteOnlyDataCommand,
     RST: OutputPin<Error = PinE>,
 {
     ///
@@ -218,13 +218,13 @@ where
 
     fn write_command(&mut self, command: Instruction) -> Result<(), Error<PinE>> {
         self.di
-            .send_commands(&[command as u8])
+            .send_commands([command as u8].as_ref().into())
             .map_err(|_| Error::DisplayError)?;
         Ok(())
     }
 
     fn write_data(&mut self, data: &[u8]) -> Result<(), Error<PinE>> {
-        self.di.send_data(data).map_err(|_| Error::DisplayError)?;
+        self.di.send_data(data.into()).map_err(|_| Error::DisplayError)?;
         Ok(())
     }
 
