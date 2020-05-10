@@ -129,9 +129,9 @@ where
     ///
     /// Sets display orientation
     ///
-    pub fn set_orientation(&mut self, orientation: &Orientation) -> Result<(), Error<PinE>> {
+    pub fn set_orientation(&mut self, orientation: Orientation) -> Result<(), Error<PinE>> {
         self.write_command(Instruction::MADCTL)?;
-        self.write_data(&[*orientation as u8])?;
+        self.write_data(&[orientation as u8])?;
         Ok(())
     }
 
