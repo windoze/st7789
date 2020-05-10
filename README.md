@@ -24,6 +24,7 @@ These features are enabled by default:
 
 ## Changelog
 
+* `v0.4.0` - use `v3` of `display-interface` with 16bit support
 * `v0.3.1` - deprecate `new_display_driver`, fix docs
 * `v0.3.0` - use `display-interface`
 * `v0.2.3` - add optimized clear()

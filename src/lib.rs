@@ -8,11 +8,8 @@ pub mod instruction;
 
 use crate::instruction::Instruction;
 
-use display_interface_spi::SPIInterface;
-
 use display_interface::WriteOnlyDataCommand;
 use embedded_hal::blocking::delay::DelayUs;
-use embedded_hal::blocking::spi;
 use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "graphics")]
@@ -20,40 +17,6 @@ mod graphics;
 
 #[cfg(feature = "batch")]
 mod batch;
-
-///
-/// Convenience function for creating a new display driver with SPI
-///
-/// # Arguments
-///
-/// * `spi` - an SPI interface to use for talking to the display
-/// * `csx` - the chip select pin documented in the datasheet
-/// * `dc` - data/clock pin switch
-/// * `rst` - display hard reset pin
-/// * `size_x` - x axis resolution of the display in pixels
-/// * `size_y` - y axis resolution of the display in pixels
-///
-#[deprecated(
-    since = "0.3.1",
-    note = "Please use ST7789::new, this function will be removed in v0.4"
-)]
-pub fn new_display_driver<SPI, CSX, DC, RST>(
-    spi: SPI,
-    csx: CSX,
-    dc: DC,
-    rst: RST,
-    size_x: u16,
-    size_y: u16,
-) -> ST7789<SPIInterface<SPI, DC, CSX>, RST>
-where
-    SPI: spi::Write<u8>,
-    CSX: OutputPin,
-    DC: OutputPin,
-    RST: OutputPin,
-{
-    let interface = SPIInterface::new(spi, dc, csx);
-    ST7789::new(interface, rst, size_x as u16, size_y as u16)
-}
 
 ///
 /// ST7789 driver to connect to TFT displays.
