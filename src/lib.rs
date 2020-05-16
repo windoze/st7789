@@ -177,6 +177,14 @@ where
         self.write_pixels(colors)
     }
 
+    ///
+    /// Release resources allocated to this driver back.
+    /// This returns the display interface and the RST pin deconstructing the driver.
+    ///
+    pub fn release(self) -> (DI, RST) {
+        (self.di, self.rst)
+    }
+
     #[cfg(not(feature = "buffer"))]
     fn write_pixels<T>(&mut self, colors: T) -> Result<(), Error<SPI, PinE>>
     where
