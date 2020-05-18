@@ -147,7 +147,7 @@ where
     pub fn set_pixel(&mut self, x: u16, y: u16, color: u16) -> Result<(), Error<PinE>> {
         self.set_address_window(x, y, x, y)?;
         self.write_command(Instruction::RAMWR)?;
-        self.write_word(color)
+        self.write_data16(&[color])
     }
 
     ///
@@ -186,12 +186,12 @@ where
     }
 
     #[cfg(not(feature = "buffer"))]
-    fn write_pixels<T>(&mut self, colors: T) -> Result<(), Error<SPI, PinE>>
+    fn write_pixels<T>(&mut self, colors: T) -> Result<(), Error<PinE>>
     where
         T: IntoIterator<Item = u16>,
     {
         for color in colors {
-            self.write_word(color)?;
+            self.write_data16(&[color])?;
         }
 
         Ok(())
@@ -243,14 +243,6 @@ where
             .map_err(|_| Error::DisplayError)
     }
 
-    // Writes a data word to the display.
-    fn write_word(&mut self, value: u16) -> Result<(), Error<PinE>> {
-        use display_interface::DataFormat::U16;
-        self.di
-            .send_data(U16(&[value.to_be()]))
-            .map_err(|_| Error::DisplayError)
-    }
-
     // Sets the address window for the display.
     fn set_address_window(
         &mut self,
@@ -260,10 +252,10 @@ where
         ey: u16,
     ) -> Result<(), Error<PinE>> {
         self.write_command(Instruction::CASET)?;
-        self.write_word(sx)?;
-        self.write_word(ex)?;
+        self.write_data(&sx.to_be_bytes())?;
+        self.write_data(&ex.to_be_bytes())?;
         self.write_command(Instruction::RASET)?;
-        self.write_word(sy)?;
-        self.write_word(ey)
+        self.write_data(&sy.to_be_bytes())?;
+        self.write_data(&ey.to_be_bytes())
     }
 }
