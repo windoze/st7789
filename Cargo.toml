@@ -26,5 +26,5 @@ version = "0.5"
 [features]
 default = ["graphics", "batch", "buffer"]
 graphics = ["embedded-graphics"]
-batch = ["heapless"]
+batch = ["heapless", "graphics"]
 buffer = []
