@@ -24,6 +24,7 @@ These features are enabled by default:
 
 ## Changelog
 
+* `v0.4.2` - fix [CASET/RASET 16bit bug](https://github.com/almindor/st7789/issues/9)
 * `v0.4.1` - add `release` deconstructor
 * `v0.4.0` - use `v3` of `display-interface` with 16bit support
 * `v0.3.1` - deprecate `new_display_driver`, fix docs
