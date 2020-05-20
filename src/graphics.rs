@@ -9,7 +9,7 @@ use embedded_graphics::style::{PrimitiveStyle, Styled};
 
 use embedded_hal::digital::v2::OutputPin;
 
-use crate::{Error, ST7789};
+use crate::{Error, ST7789, Orientation};
 use display_interface::WriteOnlyDataCommand;
 
 impl<DI, RST, PinE> ST7789<DI, RST>
@@ -96,7 +96,7 @@ where
     }
 
     fn size(&self) -> Size {
-        Size::new(self.size_x.into(), self.size_y.into())
+        Size::new(240, 240)
     }
 
     fn clear(&mut self, color: Rgb565) -> Result<(), Self::Error>
@@ -104,8 +104,11 @@ where
         Self: Sized,
     {
         let colors = core::iter::repeat(RawU16::from(color).into_inner())
-            .take(self.size_x as usize * self.size_y as usize);
+            .take(240 * 320);
 
-        self.set_pixels(0, 0, self.size_x - 1, self.size_y - 1, colors)
+        match self.orientation {
+            Orientation::Portrait | Orientation::PortraitSwapped => self.set_pixels(0, 0, 239, 319, colors),
+            Orientation::Landscape | Orientation::LandscapeSwapped => self.set_pixels(0, 0, 319, 239, colors),
+        }
     }
 }

@@ -32,10 +32,8 @@ where
     di: DI,
     // Reset pin.
     rst: RST,
-
-    // Screen size
-    size_x: u16,
-    size_y: u16,
+    // Current orientation
+    orientation: Orientation,
 }
 
 ///
@@ -48,6 +46,12 @@ pub enum Orientation {
     Landscape = 0b0110_0000,        // invert column and page/column order
     PortraitSwapped = 0b1100_0000,  // invert page and column order
     LandscapeSwapped = 0b1010_0000, // invert page and page/column order
+}
+
+impl Default for Orientation {
+    fn default() -> Self {
+        Self::Portrait
+    }
 }
 
 ///
@@ -71,15 +75,12 @@ where
     ///
     /// * `di` - a display interface for talking with the display
     /// * `rst` - display hard reset pin
-    /// * `size_x` - x axis resolution of the display in pixels
-    /// * `size_y` - y axis resolution of the display in pixels
     ///
-    pub fn new(di: DI, rst: RST, size_x: u16, size_y: u16) -> Self {
+    pub fn new(di: DI, rst: RST) -> Self {
         Self {
             di,
             rst,
-            size_x,
-            size_y,
+            orientation: Orientation::default(),
         }
     }
 
@@ -97,6 +98,8 @@ where
         self.write_command(Instruction::SLPOUT)?; // turn off sleep
         delay_source.delay_us(10_000);
         self.write_command(Instruction::INVOFF)?; // turn off invert
+        self.write_command(Instruction::VSCRDER)?; // vertical scroll definition
+        self.write_data(&[0u8, 0u8, 0x14u8, 0u8, 0u8, 0u8])?; // 0 TSA, 320 VSA, 0 BSA
         self.write_command(Instruction::MADCTL)?; // left -> right, bottom -> top RGB
         self.write_data(&[0b0000_0000])?;
         self.write_command(Instruction::COLMOD)?; // 16bit 65k colors
@@ -134,6 +137,7 @@ where
     pub fn set_orientation(&mut self, orientation: Orientation) -> Result<(), Error<PinE>> {
         self.write_command(Instruction::MADCTL)?;
         self.write_data(&[orientation as u8])?;
+        self.orientation = orientation;
         Ok(())
     }
 
@@ -183,6 +187,17 @@ where
         self.di
             .send_data(U16BEIter(&mut colors.into_iter()))
             .map_err(|_| Error::DisplayError)
+    }
+
+    ///
+    /// Sets scroll offset "shifting" the displayed picture
+    /// # Arguments
+    ///
+    /// * `offset` - scroll offset in pixels
+    ///
+    pub fn set_scroll_offset(&mut self, offset: u16) -> Result<(), Error<PinE>> {
+        self.write_command(Instruction::VSCAD)?;
+        self.write_data(&offset.to_be_bytes())
     }
 
     ///

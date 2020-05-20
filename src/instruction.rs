@@ -18,7 +18,9 @@ pub enum Instruction {
     RAMWR = 0x2C,
     RAMRD = 0x2E,
     PTLAR = 0x30,
+    VSCRDER = 0x33,
     COLMOD = 0x3A,
     MADCTL = 0x36,
+    VSCAD = 0x37,
     VCMOFSET = 0xC5,
 }

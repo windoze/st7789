@@ -43,10 +43,10 @@ where
         {
             //  Render the Pixel Block.
             self.set_pixels(
-                x_left as u16,
-                y_top as u16,
-                x_right as u16,
-                y_bottom as u16,
+                x_left,
+                y_top,
+                x_right,
+                y_bottom,
                 colors,
             )?;
 
@@ -76,11 +76,11 @@ pub struct RowIterator<P: Iterator<Item = Pixel<Rgb565>>> {
     /// Pixels to be batched into rows
     pixels: P,
     /// Start column number
-    x_left: u8,
+    x_left: u16,
     /// End column number
-    x_right: u8,
+    x_right: u16,
     /// Row number
-    y: u8,
+    y: u16,
     /// List of pixel colours for the entire row
     colors: RowColors,
     /// True if this is the first pixel for the row
@@ -93,13 +93,13 @@ pub struct BlockIterator<R: Iterator<Item = PixelRow>> {
     /// Pixel Rows to be batched into blocks
     rows: R,
     /// Start column number
-    x_left: u8,
+    x_left: u16,
     /// End column number
-    x_right: u8,
+    x_right: u16,
     /// Start row number
-    y_top: u8,
+    y_top: u16,
     /// End row number
-    y_bottom: u8,
+    y_bottom: u16,
     /// List of pixel colours for the entire block, row by row
     colors: BlockColors,
     /// True if this is the first row for the block
@@ -109,11 +109,11 @@ pub struct BlockIterator<R: Iterator<Item = PixelRow>> {
 /// A row of contiguous pixels
 pub struct PixelRow {
     /// Start column number
-    pub x_left: u8,
+    pub x_left: u16,
     /// End column number
-    pub x_right: u8,
+    pub x_right: u16,
     /// Row number
-    pub y: u8,
+    pub y: u16,
     /// List of pixel colours for the entire row
     pub colors: RowColors,
 }
@@ -121,13 +121,13 @@ pub struct PixelRow {
 /// A block of contiguous pixel rows with the same start and end column number
 pub struct PixelBlock {
     /// Start column number
-    pub x_left: u8,
+    pub x_left: u16,
     /// End column number
-    pub x_right: u8,
+    pub x_right: u16,
     /// Start row number
-    pub y_top: u8,
+    pub y_top: u16,
     /// End row number
-    pub y_bottom: u8,
+    pub y_bottom: u16,
     /// List of pixel colours for the entire block, row by row
     pub colors: BlockColors,
 }
@@ -196,8 +196,8 @@ impl<P: Iterator<Item = Pixel<Rgb565>>> Iterator for RowIterator<P> {
                 }
                 Some(Pixel(coord, color)) => {
                     //  If there is a pixel...
-                    let x = coord.x as u8;
-                    let y = coord.y as u8;
+                    let x = coord.x as u16;
+                    let y = coord.y as u16;
                     let color = RawU16::from(color).into_inner();
                     //  Save the first pixel as the row start and handle next pixel.
                     if self.first_pixel {
