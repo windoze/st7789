@@ -191,7 +191,7 @@ where
         T: IntoIterator<Item = u16>,
     {
         for color in colors {
-            self.write_data16(&[color])?;
+            self.write_data16(&[color.to_be()])?;
         }
 
         Ok(())
