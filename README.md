@@ -24,6 +24,7 @@ These features are enabled by default:
 
 ## Changelog
 
+* `v0.4.3` - fix endianness issue if `buffer` feature is turned off
 * `v0.4.2` - fix [CASET/RASET 16bit bug](https://github.com/almindor/st7789/issues/9)
 * `v0.4.1` - add `release` deconstructor
 * `v0.4.0` - use `v3` of `display-interface` with 16bit support
