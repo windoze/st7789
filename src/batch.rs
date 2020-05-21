@@ -42,13 +42,7 @@ where
         } in blocks
         {
             //  Render the Pixel Block.
-            self.set_pixels(
-                x_left,
-                y_top,
-                x_right,
-                y_bottom,
-                colors,
-            )?;
+            self.set_pixels(x_left, y_top, x_right, y_bottom, colors)?;
 
             //  Dump out the Pixel Blocks for the square in test_display()
             /* if x_left >= 60 && x_left <= 150 && x_right >= 60 && x_right <= 150 && y_top >= 60 && y_top <= 150 && y_bottom >= 60 && y_bottom <= 150 {
