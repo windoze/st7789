@@ -132,6 +132,13 @@ where
     }
 
     ///
+    /// Returns currently set orientation
+    ///
+    pub fn orientation(&self) -> Orientation {
+        self.orientation
+    }
+
+    ///
     /// Sets display orientation
     ///
     pub fn set_orientation(&mut self, orientation: Orientation) -> Result<(), Error<PinE>> {
