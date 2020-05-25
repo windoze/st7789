@@ -7,7 +7,9 @@
 pub mod instruction;
 
 use crate::instruction::Instruction;
+use core::iter::once;
 
+use display_interface::DataFormat::{U16BEIter, U8Iter};
 use display_interface::WriteOnlyDataCommand;
 use embedded_hal::blocking::delay::DelayUs;
 use embedded_hal::digital::v2::OutputPin;
@@ -147,7 +149,11 @@ where
     pub fn set_pixel(&mut self, x: u16, y: u16, color: u16) -> Result<(), Error<PinE>> {
         self.set_address_window(x, y, x, y)?;
         self.write_command(Instruction::RAMWR)?;
-        self.write_data16(&[color])
+        self.di
+            .send_data(U16BEIter(&mut once(color)))
+            .map_err(|_| Error::DisplayError)?;
+
+        Ok(())
     }
 
     ///
@@ -174,7 +180,9 @@ where
     {
         self.set_address_window(sx, sy, ex, ey)?;
         self.write_command(Instruction::RAMWR)?;
-        self.write_pixels(colors)
+        self.di
+            .send_data(U16BEIter(&mut colors.into_iter()))
+            .map_err(|_| Error::DisplayError)
     }
 
     ///
@@ -185,61 +193,16 @@ where
         (self.di, self.rst)
     }
 
-    #[cfg(not(feature = "buffer"))]
-    fn write_pixels<T>(&mut self, colors: T) -> Result<(), Error<PinE>>
-    where
-        T: IntoIterator<Item = u16>,
-    {
-        for color in colors {
-            self.write_data16(&[color.to_be()])?;
-        }
-
-        Ok(())
-    }
-
-    #[cfg(feature = "buffer")]
-    fn write_pixels<T>(&mut self, colors: T) -> Result<(), Error<PinE>>
-    where
-        T: IntoIterator<Item = u16>,
-    {
-        let mut buf = [0; 64];
-        let mut i = 0;
-
-        for color in colors {
-            let word = color.to_be();
-            buf[i] = word;
-            i += 1;
-
-            if i == buf.len() {
-                self.write_data16(&buf)?;
-                i = 0;
-            }
-        }
-
-        if i > 0 {
-            self.write_data16(&buf[..i])?;
-        }
-
-        Ok(())
-    }
-
     fn write_command(&mut self, command: Instruction) -> Result<(), Error<PinE>> {
-        use display_interface::DataFormat::U8;
         self.di
-            .send_commands(U8(&[command as u8]))
+            .send_commands(U8Iter(&mut once(command as u8)))
             .map_err(|_| Error::DisplayError)?;
         Ok(())
     }
 
     fn write_data(&mut self, data: &[u8]) -> Result<(), Error<PinE>> {
-        use display_interface::DataFormat::U8;
-        self.di.send_data(U8(data)).map_err(|_| Error::DisplayError)
-    }
-
-    fn write_data16(&mut self, data: &[u16]) -> Result<(), Error<PinE>> {
-        use display_interface::DataFormat::U16;
         self.di
-            .send_data(U16(data))
+            .send_data(U8Iter(&mut data.iter().cloned()))
             .map_err(|_| Error::DisplayError)
     }
 
