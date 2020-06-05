@@ -96,7 +96,7 @@ where
     }
 
     fn size(&self) -> Size {
-        Size::new(240, 240) // visible area, not RAM-pixel size
+        Size::new(self.size_x.into(), self.size_y.into()) // visible area, not RAM-pixel size
     }
 
     fn clear(&mut self, color: Rgb565) -> Result<(), Self::Error>

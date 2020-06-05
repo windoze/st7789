@@ -32,6 +32,9 @@ where
     di: DI,
     // Reset pin.
     rst: RST,
+    // Visible size (x, y)
+    size_x: u16,
+    size_y: u16,
     // Current orientation
     orientation: Orientation,
 }
@@ -75,11 +78,15 @@ where
     ///
     /// * `di` - a display interface for talking with the display
     /// * `rst` - display hard reset pin
+    /// * `size_x` - x axis resolution of the display in pixels
+    /// * `size_y` - y axis resolution of the display in pixels
     ///
-    pub fn new(di: DI, rst: RST) -> Self {
+    pub fn new(di: DI, rst: RST, size_x: u16, size_y: u16) -> Self {
         Self {
             di,
             rst,
+            size_x,
+            size_y,
             orientation: Orientation::default(),
         }
     }
