@@ -19,8 +19,8 @@ These features are enabled by default:
 
 - [x] Communications via SPI
 - [x] Tested with PineTime watch
+- [x] Hardware scrolling support
 - [ ] Offscreen Buffering
-- [ ] Hardware scrolling support
 
 ## [Changelog](CHANGELOG.md)
 
