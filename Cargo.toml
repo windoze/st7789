@@ -21,7 +21,7 @@ version = "0.6"
 
 [dependencies.heapless]
 optional = true
-version = "0.5"
+version = "0.6"
 
 [features]
 default = ["graphics", "batch", "buffer"]
