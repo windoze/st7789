@@ -1,6 +1,10 @@
-use embedded_graphics::{pixelcolor::raw::{RawData, RawU16}, prelude::PointsIter, primitives::Rectangle};
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::{DrawTarget, Size};
+use embedded_graphics::{
+    pixelcolor::raw::{RawData, RawU16},
+    prelude::PointsIter,
+    primitives::Rectangle,
+};
 use embedded_graphics::{prelude::OriginDimensions, Pixel};
 
 use embedded_hal::digital::v2::OutputPin;
@@ -53,7 +57,8 @@ where
             let ex = bottom_right.x as u16;
             let ey = bottom_right.y as u16;
             self.set_pixels(sx, sy, ex, ey, &mut colors)
-        } else { // nothing to draw
+        } else {
+            // nothing to draw
             Ok(())
         }
     }
