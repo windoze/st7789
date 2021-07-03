@@ -1,4 +1,4 @@
-use embedded_graphics::pixelcolor::raw::{RawData, RawU16};
+use embedded_graphics::{pixelcolor::raw::{RawData, RawU16}, prelude::PointsIter, primitives::Rectangle};
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::{DrawTarget, Size};
 use embedded_graphics::{prelude::OriginDimensions, Pixel};
@@ -42,28 +42,21 @@ where
         self.draw_batch(item)
     }
 
-    // fn draw_rectangle(
-    //     &mut self,
-    //     item: &Styled<Rectangle, PrimitiveStyle<Rgb565>>,
-    // ) -> Result<(), Self::Error> {
-    //     // filled rect can be rendered into frame window directly
-    //     if item.style.fill_color.is_some() {
-    //         let mut colors = item.into_iter().map(|p| RawU16::from(p.1).into_inner());
+    fn fill_solid(&mut self, area: &Rectangle, color: Self::Color) -> Result<(), Self::Error> {
+        // filled rect can be rendered into frame window directly
 
-    //         self.fill_rect(item, &mut colors)
-    //     } else if let Some(_color) = item.style.stroke_color {
-    //         if item.style.stroke_width == 0 {
-    //             return Ok(()); // nothing to draw
-    //         }
-    //         // let sw = item.style.stroke_width as u16;
+        if let Some(bottom_right) = area.bottom_right() {
+            let mut colors = area.points().map(|_| RawU16::from(color).into_inner());
 
-    //         // TODO: construct rectangle as 4 frames
-    //         self.draw_iter(item)
-    //     } else {
-    //         // if we don't know what this rect is, draw individual pixels
-    //         self.draw_iter(item)
-    //     }
-    // }
+            let sx = area.top_left.x as u16;
+            let sy = area.top_left.y as u16;
+            let ex = bottom_right.x as u16;
+            let ey = bottom_right.y as u16;
+            self.set_pixels(sx, sy, ex, ey, &mut colors)
+        } else { // nothing to draw
+            Ok(())
+        }
+    }
 
     // fn draw_image<'a, 'b, I>(&mut self, item: &'a Image<'b, I, Rgb565>) -> Result<(), Self::Error>
     // where
