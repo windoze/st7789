@@ -3,7 +3,7 @@
 //! This enables the pixels to be rendered efficiently as Pixel Blocks, which may be transmitted in a single Non-Blocking SPI request.
 use crate::{Error, ST7789};
 use display_interface::WriteOnlyDataCommand;
-use embedded_graphics::{
+use embedded_graphics_core::{
     pixelcolor::{raw::RawU16, Rgb565},
     prelude::*,
 };

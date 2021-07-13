@@ -15,9 +15,9 @@ display-interface = "0.4"
 embedded-hal = "0.2"
 nb = "1.0"
 
-[dependencies.embedded-graphics]
+[dependencies.embedded-graphics-core]
 optional = true
-version = "0.7"
+version = "0.3.2"
 
 [dependencies.heapless]
 optional = true
@@ -25,6 +25,6 @@ version = "0.7"
 
 [features]
 default = ["graphics", "batch", "buffer"]
-graphics = ["embedded-graphics"]
+graphics = ["embedded-graphics-core"]
 batch = ["heapless", "graphics"]
 buffer = []

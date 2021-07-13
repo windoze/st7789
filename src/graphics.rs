@@ -1,11 +1,11 @@
-use embedded_graphics::pixelcolor::Rgb565;
-use embedded_graphics::prelude::{DrawTarget, Size};
-use embedded_graphics::{
+use embedded_graphics_core::pixelcolor::Rgb565;
+use embedded_graphics_core::prelude::{DrawTarget, Size};
+use embedded_graphics_core::{
     pixelcolor::raw::{RawData, RawU16},
     prelude::PointsIter,
     primitives::Rectangle,
 };
-use embedded_graphics::{prelude::OriginDimensions, Pixel};
+use embedded_graphics_core::{prelude::OriginDimensions, Pixel};
 
 use embedded_hal::digital::v2::OutputPin;
 
