@@ -2,7 +2,7 @@
 
 ## v0.6
 
-* `v0.6.0` - update `embedded-graphics` to `v0.7`
+* `v0.6.0` - update `embedded-graphics` support to `v0.7`
 
 ## v0.5
 
