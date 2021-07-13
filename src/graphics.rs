@@ -1,49 +1,38 @@
-use embedded_graphics::drawable::Pixel;
-use embedded_graphics::geometry::Dimensions;
-use embedded_graphics::image::{Image, ImageDimensions, IntoPixelIter};
-use embedded_graphics::pixelcolor::raw::{RawData, RawU16};
-use embedded_graphics::pixelcolor::Rgb565;
-use embedded_graphics::prelude::{DrawTarget, Size};
-use embedded_graphics::primitives::Rectangle;
-use embedded_graphics::style::{PrimitiveStyle, Styled};
+use embedded_graphics_core::pixelcolor::Rgb565;
+use embedded_graphics_core::prelude::{DrawTarget, Size};
+use embedded_graphics_core::{
+    pixelcolor::raw::{RawData, RawU16},
+    primitives::Rectangle,
+};
+use embedded_graphics_core::{prelude::OriginDimensions, Pixel};
 
 use embedded_hal::digital::v2::OutputPin;
 
 use crate::{Error, Orientation, ST7789};
 use display_interface::WriteOnlyDataCommand;
 
-impl<DI, RST, PinE> ST7789<DI, RST>
-where
-    DI: WriteOnlyDataCommand,
-    RST: OutputPin<Error = PinE>,
-{
-    fn fill_rect(
-        &mut self,
-        item: &dyn Dimensions,
-        colors: &mut dyn Iterator<Item = u16>,
-    ) -> Result<(), Error<PinE>> {
-        let sx = item.top_left().x as u16;
-        let sy = item.top_left().y as u16;
-        let ex = item.bottom_right().x as u16;
-        let ey = item.bottom_right().y as u16;
-
-        self.set_pixels(sx, sy, ex, ey, colors)
-    }
-}
-
-impl<DI, RST, PinE> DrawTarget<Rgb565> for ST7789<DI, RST>
+impl<DI, RST, PinE> DrawTarget for ST7789<DI, RST>
 where
     DI: WriteOnlyDataCommand,
     RST: OutputPin<Error = PinE>,
 {
     type Error = Error<PinE>;
+    type Color = Rgb565;
 
-    fn draw_pixel(&mut self, pixel: Pixel<Rgb565>) -> Result<(), Self::Error> {
-        let color = RawU16::from(pixel.1).into_inner();
-        let x = pixel.0.x as u16;
-        let y = pixel.0.y as u16;
+    #[cfg(not(feature = "batch"))]
+    fn draw_iter<I>(&mut self, pixels: I) -> Result<(), Self::Error>
+    where
+        I: IntoIterator<Item = Pixel<Self::Color>>,
+    {
+        for pixel in pixels {
+            let color = RawU16::from(pixel.1).into_inner();
+            let x = pixel.0.x as u16;
+            let y = pixel.0.y as u16;
 
-        self.set_pixel(x, y, color)
+            self.set_pixel(x, y, color)?;
+        }
+
+        Ok(())
     }
 
     #[cfg(feature = "batch")]
@@ -56,47 +45,31 @@ where
         self.draw_batch(item)
     }
 
-    fn draw_rectangle(
-        &mut self,
-        item: &Styled<Rectangle, PrimitiveStyle<Rgb565>>,
-    ) -> Result<(), Self::Error> {
-        // filled rect can be rendered into frame window directly
-        if item.style.fill_color.is_some() {
-            let mut colors = item.into_iter().map(|p| RawU16::from(p.1).into_inner());
-
-            self.fill_rect(item, &mut colors)
-        } else if let Some(_color) = item.style.stroke_color {
-            if item.style.stroke_width == 0 {
-                return Ok(()); // nothing to draw
-            }
-            // let sw = item.style.stroke_width as u16;
-
-            // TODO: construct rectangle as 4 frames
-            self.draw_iter(item)
-        } else {
-            // if we don't know what this rect is, draw individual pixels
-            self.draw_iter(item)
-        }
-    }
-
-    fn draw_image<'a, 'b, I>(&mut self, item: &'a Image<'b, I, Rgb565>) -> Result<(), Self::Error>
+    fn fill_contiguous<I>(&mut self, area: &Rectangle, colors: I) -> Result<(), Self::Error>
     where
-        &'b I: IntoPixelIter<Rgb565>,
-        I: ImageDimensions,
+        I: IntoIterator<Item = Self::Color>,
     {
-        // TODO: this is inconsistent in embedded-graphics between Rectangle and Image
-        // See: https://github.com/jamwaffles/embedded-graphics/issues/182
-        let sx = item.top_left().x as u16;
-        let sy = item.top_left().y as u16;
-        let ex = (item.bottom_right().x - 1) as u16;
-        let ey = (item.bottom_right().y - 1) as u16;
-        let colors = item.into_iter().map(|p| RawU16::from(p.1).into_inner());
+        if let Some(bottom_right) = area.bottom_right() {
+            let mut count = 0u32;
+            let max = area.size.width * area.size.height;
 
-        self.set_pixels(sx, sy, ex, ey, colors)
-    }
+            let mut colors = colors
+                .into_iter()
+                .take_while(|_| {
+                    count += 1;
+                    count <= max
+                })
+                .map(|color| RawU16::from(color).into_inner());
 
-    fn size(&self) -> Size {
-        Size::new(self.size_x.into(), self.size_y.into()) // visible area, not RAM-pixel size
+            let sx = area.top_left.x as u16;
+            let sy = area.top_left.y as u16;
+            let ex = bottom_right.x as u16;
+            let ey = bottom_right.y as u16;
+            self.set_pixels(sx, sy, ex, ey, &mut colors)
+        } else {
+            // nothing to draw
+            Ok(())
+        }
     }
 
     fn clear(&mut self, color: Rgb565) -> Result<(), Self::Error>
@@ -113,5 +86,15 @@ where
                 self.set_pixels(0, 0, 319, 239, colors)
             }
         }
+    }
+}
+
+impl<DI, RST, PinE> OriginDimensions for ST7789<DI, RST>
+where
+    DI: WriteOnlyDataCommand,
+    RST: OutputPin<Error = PinE>,
+{
+    fn size(&self) -> Size {
+        Size::new(self.size_x.into(), self.size_y.into()) // visible area, not RAM-pixel size
     }
 }

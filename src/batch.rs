@@ -3,7 +3,7 @@
 //! This enables the pixels to be rendered efficiently as Pixel Blocks, which may be transmitted in a single Non-Blocking SPI request.
 use crate::{Error, ST7789};
 use display_interface::WriteOnlyDataCommand;
-use embedded_graphics::{
+use embedded_graphics_core::{
     pixelcolor::{raw::RawU16, Rgb565},
     prelude::*,
 };
@@ -55,14 +55,14 @@ where
 }
 
 /// Max number of pixels per Pixel Row
-type MaxRowSize = heapless::consts::U50;
+const MAX_ROW_SIZE: usize = 50;
 /// Max number of pixels per Pixel Block
-type MaxBlockSize = heapless::consts::U100;
+const MAX_BLOCK_SIZE: usize = 100;
 
 /// Consecutive color words for a Pixel Row
-type RowColors = heapless::Vec<u16, MaxRowSize>;
+type RowColors = heapless::Vec<u16, MAX_ROW_SIZE>;
 /// Consecutive color words for a Pixel Block
-type BlockColors = heapless::Vec<u16, MaxBlockSize>;
+type BlockColors = heapless::Vec<u16, MAX_BLOCK_SIZE>;
 
 /// Iterator for each Pixel Row in the pixel data. A Pixel Row consists of contiguous pixels on the same row.
 #[derive(Debug, Clone)]

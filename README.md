@@ -24,3 +24,7 @@ These features are enabled by default:
 
 ## [Changelog](CHANGELOG.md)
 
+## Minimum supported Rust version
+
+The minimum supported Rust version for the st7789 driver is 1.40.0 or greater.
+Ensure you have the correct version of Rust installed, preferably through https://rustup.rs.
