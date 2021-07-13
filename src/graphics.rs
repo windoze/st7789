@@ -2,7 +2,6 @@ use embedded_graphics_core::pixelcolor::Rgb565;
 use embedded_graphics_core::prelude::{DrawTarget, Size};
 use embedded_graphics_core::{
     pixelcolor::raw::{RawData, RawU16},
-    prelude::PointsIter,
     primitives::Rectangle,
 };
 use embedded_graphics_core::{prelude::OriginDimensions, Pixel};
@@ -46,11 +45,21 @@ where
         self.draw_batch(item)
     }
 
-    fn fill_solid(&mut self, area: &Rectangle, color: Self::Color) -> Result<(), Self::Error> {
-        // filled rect can be rendered into frame window directly
-
+    fn fill_contiguous<I>(&mut self, area: &Rectangle, colors: I) -> Result<(), Self::Error>
+    where
+        I: IntoIterator<Item = Self::Color>,
+    {
         if let Some(bottom_right) = area.bottom_right() {
-            let mut colors = area.points().map(|_| RawU16::from(color).into_inner());
+            let mut count = 0u32;
+            let max = area.size.width * area.size.height;
+
+            let mut colors = colors
+                .into_iter()
+                .take_while(|_| {
+                    count += 1;
+                    count <= max
+                })
+                .map(|color| RawU16::from(color).into_inner());
 
             let sx = area.top_left.x as u16;
             let sy = area.top_left.y as u16;
@@ -62,22 +71,6 @@ where
             Ok(())
         }
     }
-
-    // fn draw_image<'a, 'b, I>(&mut self, item: &'a Image<'b, I, Rgb565>) -> Result<(), Self::Error>
-    // where
-    //     &'b I: IntoPixelIter<Rgb565>,
-    //     I: ImageDimensions,
-    // {
-    //     // TODO: this is inconsistent in embedded-graphics between Rectangle and Image
-    //     // See: https://github.com/jamwaffles/embedded-graphics/issues/182
-    //     let sx = item.top_left().x as u16;
-    //     let sy = item.top_left().y as u16;
-    //     let ex = (item.bottom_right().x - 1) as u16;
-    //     let ey = (item.bottom_right().y - 1) as u16;
-    //     let colors = item.into_iter().map(|p| RawU16::from(p.1).into_inner());
-
-    //     self.set_pixels(sx, sy, ex, ey, colors)
-    // }
 
     fn clear(&mut self, color: Rgb565) -> Result<(), Self::Error>
     where
