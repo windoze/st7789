@@ -19,8 +19,10 @@ pub enum Instruction {
     RAMRD = 0x2E,
     PTLAR = 0x30,
     VSCRDER = 0x33,
-    COLMOD = 0x3A,
+    TEOFF = 0x34,
+    TEON = 0x35,
     MADCTL = 0x36,
     VSCAD = 0x37,
+    COLMOD = 0x3A,
     VCMOFSET = 0xC5,
 }
