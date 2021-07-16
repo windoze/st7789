@@ -58,6 +58,19 @@ impl Default for Orientation {
 }
 
 ///
+/// Tearing effect output setting.
+///
+#[derive(Copy, Clone)]
+pub enum TearingEffect {
+    /// Disable output.
+    Off,
+    /// Output vertical blanking information.
+    Vertical,
+    /// Output horizontal and vertical blanking information.
+    HorizontalAndVertical,
+}
+
+///
 /// An error holding its source (pins or SPI)
 ///
 #[derive(Debug)]
@@ -249,5 +262,22 @@ where
         self.write_command(Instruction::RASET)?;
         self.write_data(&sy.to_be_bytes())?;
         self.write_data(&ey.to_be_bytes())
+    }
+
+    ///
+    /// Configures the tearing effect output.
+    ///
+    pub fn set_tearing_effect(&mut self, tearing_effect: TearingEffect) -> Result<(), Error<PinE>> {
+        match tearing_effect {
+            TearingEffect::Off => self.write_command(Instruction::TEOFF),
+            TearingEffect::Vertical => {
+                self.write_command(Instruction::TEON)?;
+                self.write_data(&[0])
+            }
+            TearingEffect::HorizontalAndVertical => {
+                self.write_command(Instruction::TEON)?;
+                self.write_data(&[1])
+            }
+        }
     }
 }
