@@ -1,5 +1,5 @@
 use embedded_graphics_core::pixelcolor::Rgb565;
-use embedded_graphics_core::prelude::{DrawTarget, Size};
+use embedded_graphics_core::prelude::{DrawTarget, IntoStorage, Point, Size};
 use embedded_graphics_core::{
     pixelcolor::raw::{RawData, RawU16},
     primitives::Rectangle,
@@ -10,6 +10,22 @@ use embedded_hal::digital::v2::OutputPin;
 
 use crate::{Error, Orientation, ST7789};
 use display_interface::WriteOnlyDataCommand;
+
+impl<DI, RST, PinE> ST7789<DI, RST>
+where
+    DI: WriteOnlyDataCommand,
+    RST: OutputPin<Error = PinE>,
+{
+    /// Returns the bounding box for the entire framebuffer.
+    fn framebuffer_bounding_box(&self) -> Rectangle {
+        let size = match self.orientation {
+            Orientation::Portrait | Orientation::PortraitSwapped => Size::new(240, 320),
+            Orientation::Landscape | Orientation::LandscapeSwapped => Size::new(320, 240),
+        };
+
+        Rectangle::new(Point::zero(), size)
+    }
+}
 
 impl<DI, RST, PinE> DrawTarget for ST7789<DI, RST>
 where
@@ -60,6 +76,29 @@ where
                     count <= max
                 })
                 .map(|color| RawU16::from(color).into_inner());
+
+            let sx = area.top_left.x as u16;
+            let sy = area.top_left.y as u16;
+            let ex = bottom_right.x as u16;
+            let ey = bottom_right.y as u16;
+            self.set_pixels(sx, sy, ex, ey, &mut colors)
+        } else {
+            // nothing to draw
+            Ok(())
+        }
+    }
+
+    fn fill_solid(&mut self, area: &Rectangle, color: Self::Color) -> Result<(), Self::Error> {
+        let area = area.intersection(&self.framebuffer_bounding_box());
+
+        if let Some(bottom_right) = area.bottom_right() {
+            let mut count = 0u32;
+            let max = area.size.width * area.size.height;
+
+            let mut colors = core::iter::repeat(color.into_storage()).take_while(|_| {
+                count += 1;
+                count <= max
+            });
 
             let sx = area.top_left.x as u16;
             let sy = area.top_left.y as u16;
