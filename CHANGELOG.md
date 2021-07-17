@@ -3,6 +3,7 @@
 ## v0.6
 
 * `v0.6.0` - update `embedded-graphics` support to `v0.7`
+* `v0.6.1` - optimize `fill_solid` and add tearing effect support
 
 ## v0.5
 
