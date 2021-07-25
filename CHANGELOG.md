@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## *unreleased*
+
+* `v0.6.1` - remove unused `buffer` feature
+
 ## v0.6
 
 * `v0.6.0` - update `embedded-graphics` support to `v0.7`
