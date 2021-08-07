@@ -31,7 +31,7 @@ where
     // Display interface
     di: DI,
     // Reset pin.
-    rst: RST,
+    rst: Option<RST>,
     // Visible size (x, y)
     size_x: u16,
     size_y: u16,
@@ -94,7 +94,7 @@ where
     /// * `size_x` - x axis resolution of the display in pixels
     /// * `size_y` - y axis resolution of the display in pixels
     ///
-    pub fn new(di: DI, rst: RST, size_x: u16, size_y: u16) -> Self {
+    pub fn new(di: DI, rst: Option<RST>, size_x: u16, size_y: u16) -> Self {
         Self {
             di,
             rst,
@@ -141,12 +141,14 @@ where
     /// * `delay_source` - mutable reference to a delay provider
     ///
     pub fn hard_reset(&mut self, delay_source: &mut impl DelayUs<u32>) -> Result<(), Error<PinE>> {
-        self.rst.set_high().map_err(Error::Pin)?;
-        delay_source.delay_us(10); // ensure the pin change will get registered
-        self.rst.set_low().map_err(Error::Pin)?;
-        delay_source.delay_us(10); // ensure the pin change will get registered
-        self.rst.set_high().map_err(Error::Pin)?;
-        delay_source.delay_us(10); // ensure the pin change will get registered
+        if let Some(rst) = self.rst.as_mut() {
+            rst.set_high().map_err(Error::Pin)?;
+            delay_source.delay_us(10); // ensure the pin change will get registered
+            rst.set_low().map_err(Error::Pin)?;
+            delay_source.delay_us(10); // ensure the pin change will get registered
+            rst.set_high().map_err(Error::Pin)?;
+            delay_source.delay_us(10); // ensure the pin change will get registered
+        }
 
         Ok(())
     }
@@ -231,7 +233,7 @@ where
     /// Release resources allocated to this driver back.
     /// This returns the display interface and the RST pin deconstructing the driver.
     ///
-    pub fn release(self) -> (DI, RST) {
+    pub fn release(self) -> (DI, Option<RST>) {
         (self.di, self.rst)
     }
 
