@@ -11,10 +11,10 @@ use embedded_hal::digital::v2::OutputPin;
 use crate::{Error, Orientation, ST7789};
 use display_interface::WriteOnlyDataCommand;
 
-impl<DI, RST, PinE> ST7789<DI, RST>
+impl<DI, OUT, PinE> ST7789<DI, OUT>
 where
     DI: WriteOnlyDataCommand,
-    RST: OutputPin<Error = PinE>,
+    OUT: OutputPin<Error = PinE>,
 {
     /// Returns the bounding box for the entire framebuffer.
     fn framebuffer_bounding_box(&self) -> Rectangle {
@@ -27,10 +27,10 @@ where
     }
 }
 
-impl<DI, RST, PinE> DrawTarget for ST7789<DI, RST>
+impl<DI, OUT, PinE> DrawTarget for ST7789<DI, OUT>
 where
     DI: WriteOnlyDataCommand,
-    RST: OutputPin<Error = PinE>,
+    OUT: OutputPin<Error = PinE>,
 {
     type Error = Error<PinE>;
     type Color = Rgb565;
@@ -128,10 +128,10 @@ where
     }
 }
 
-impl<DI, RST, PinE> OriginDimensions for ST7789<DI, RST>
+impl<DI, OUT, PinE> OriginDimensions for ST7789<DI, OUT>
 where
     DI: WriteOnlyDataCommand,
-    RST: OutputPin<Error = PinE>,
+    OUT: OutputPin<Error = PinE>,
 {
     fn size(&self) -> Size {
         Size::new(self.size_x.into(), self.size_y.into()) // visible area, not RAM-pixel size

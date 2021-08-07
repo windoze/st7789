@@ -9,19 +9,19 @@ use embedded_graphics_core::{
 };
 use embedded_hal::digital::v2::OutputPin;
 
-pub trait DrawBatch<DI, RST, T, PinE>
+pub trait DrawBatch<DI, OUT, T, PinE>
 where
     DI: WriteOnlyDataCommand,
-    RST: OutputPin<Error = PinE>,
+    OUT: OutputPin<Error = PinE>,
     T: IntoIterator<Item = Pixel<Rgb565>>,
 {
     fn draw_batch(&mut self, item_pixels: T) -> Result<(), Error<PinE>>;
 }
 
-impl<DI, RST, T, PinE> DrawBatch<DI, RST, T, PinE> for ST7789<DI, RST>
+impl<DI, OUT, T, PinE> DrawBatch<DI, OUT, T, PinE> for ST7789<DI, OUT>
 where
     DI: WriteOnlyDataCommand,
-    RST: OutputPin<Error = PinE>,
+    OUT: OutputPin<Error = PinE>,
     T: IntoIterator<Item = Pixel<Rgb565>>,
 {
     fn draw_batch(&mut self, item_pixels: T) -> Result<(), Error<PinE>> {
