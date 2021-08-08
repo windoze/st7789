@@ -8,7 +8,7 @@ jobs:
 
     steps:
     - name: Install Target
-      run: rustup target install thumbv7em-none-eabihf
+      run: rustup target install thumbv7em-none-eabihf riscv32imac-unknown-none-elf
     - uses: actions/checkout@v1
     - name: Build - ARM
       run: cargo build --release --target=thumbv7em-none-eabihf
