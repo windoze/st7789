@@ -25,13 +25,13 @@ mod batch;
 
 ///
 /// ST7789 driver to connect to TFT displays.
+/// Support Rgb565 and Bgr565
 ///
 pub struct ST7789<DI, OUT, C>
 where
     DI: WriteOnlyDataCommand,
     OUT: OutputPin,
-    C: PixelColor + IntoStorage, RawU16: From<C>,
-    <C as embedded_graphics_core::pixelcolor::IntoStorage>::Storage: Clone
+    C: PixelColor + IntoStorage + Clone, RawU16: From<C>,
 {
     // Display interface
     di: DI,
@@ -98,8 +98,7 @@ impl<DI, OUT, PinE, C> ST7789<DI, OUT, C>
 where
     DI: WriteOnlyDataCommand,
     OUT: OutputPin<Error = PinE>,
-    C: PixelColor + IntoStorage, RawU16: From<C>,
-    <C as embedded_graphics_core::pixelcolor::IntoStorage>::Storage: Clone
+    C: PixelColor + IntoStorage + Clone, RawU16: From<C>,
 {
     ///
     /// Creates a new ST7789 driver instance

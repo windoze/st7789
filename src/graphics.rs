@@ -14,8 +14,7 @@ impl<DI, OUT, PinE, C> ST7789<DI, OUT, C>
 where
     DI: WriteOnlyDataCommand,
     OUT: OutputPin<Error = PinE>,
-    C: PixelColor + IntoStorage, RawU16: From<C>,
-    <C as embedded_graphics_core::pixelcolor::IntoStorage>::Storage: Clone
+    C: PixelColor + IntoStorage + Clone, RawU16: From<C>,
 {
     /// Returns the bounding box for the entire framebuffer.
     fn framebuffer_bounding_box(&self) -> Rectangle {
@@ -32,9 +31,8 @@ impl<DI, OUT, PinE, C> DrawTarget for ST7789<DI, OUT, C>
 where
     DI: WriteOnlyDataCommand,
     OUT: OutputPin<Error = PinE>,
-    C: PixelColor + IntoStorage, RawU16: From<C>,
-    <C as embedded_graphics_core::pixelcolor::IntoStorage>::Storage: Clone
-    {
+    C: PixelColor + IntoStorage + Clone, RawU16: From<C>,
+{
     type Error = Error<PinE>;
     type Color = C;
 
@@ -135,8 +133,7 @@ impl<DI, OUT, PinE, C> OriginDimensions for ST7789<DI, OUT, C>
 where
     DI: WriteOnlyDataCommand,
     OUT: OutputPin<Error = PinE>,
-    C: PixelColor + IntoStorage, RawU16: From<C>,
-    <C as embedded_graphics_core::pixelcolor::IntoStorage>::Storage: Clone
+    C: PixelColor + IntoStorage + Clone, RawU16: From<C>,
 {
     fn size(&self) -> Size {
         Size::new(self.size_x.into(), self.size_y.into()) // visible area, not RAM-pixel size

@@ -13,8 +13,7 @@ pub trait DrawBatch<DI, OUT, T, C, PinE>
 where
     DI: WriteOnlyDataCommand,
     OUT: OutputPin<Error = PinE>,
-    C: PixelColor + IntoStorage, RawU16: From<C>,
-    <C as embedded_graphics_core::pixelcolor::IntoStorage>::Storage: Clone,
+    C: PixelColor + IntoStorage + Clone, RawU16: From<C>,
     T: IntoIterator<Item = Pixel<C>>,
 {
     fn draw_batch(&mut self, item_pixels: T) -> Result<(), Error<PinE>>;
@@ -25,8 +24,7 @@ where
     DI: WriteOnlyDataCommand,
     OUT: OutputPin<Error = PinE>,
     T: IntoIterator<Item = Pixel<C>>,
-    C: PixelColor + IntoStorage, RawU16: From<C>,
-    <C as embedded_graphics_core::pixelcolor::IntoStorage>::Storage: Clone,
+    C: PixelColor + IntoStorage + Clone, RawU16: From<C>,
 {
     fn draw_batch(&mut self, item_pixels: T) -> Result<(), Error<PinE>> {
         //  Get the pixels for the item to be rendered.
