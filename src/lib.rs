@@ -8,9 +8,12 @@ pub mod instruction;
 
 use crate::instruction::Instruction;
 use core::iter::once;
+use core::marker::PhantomData;
 
 use display_interface::DataFormat::{U16BEIter, U8Iter};
 use display_interface::WriteOnlyDataCommand;
+use embedded_graphics_core::pixelcolor::raw::RawU16;
+use embedded_graphics_core::prelude::{PixelColor, IntoStorage};
 use embedded_hal::blocking::delay::DelayUs;
 use embedded_hal::digital::v2::OutputPin;
 
@@ -23,10 +26,12 @@ mod batch;
 ///
 /// ST7789 driver to connect to TFT displays.
 ///
-pub struct ST7789<DI, OUT>
+pub struct ST7789<DI, OUT, C>
 where
     DI: WriteOnlyDataCommand,
     OUT: OutputPin,
+    C: PixelColor + IntoStorage, RawU16: From<C>,
+    <C as embedded_graphics_core::pixelcolor::IntoStorage>::Storage: Clone
 {
     // Display interface
     di: DI,
@@ -39,6 +44,8 @@ where
     size_y: u16,
     // Current orientation
     orientation: Orientation,
+
+    _phantom: PhantomData<C>,
 }
 
 ///
@@ -87,10 +94,12 @@ pub enum Error<PinE> {
     Pin(PinE),
 }
 
-impl<DI, OUT, PinE> ST7789<DI, OUT>
+impl<DI, OUT, PinE, C> ST7789<DI, OUT, C>
 where
     DI: WriteOnlyDataCommand,
     OUT: OutputPin<Error = PinE>,
+    C: PixelColor + IntoStorage, RawU16: From<C>,
+    <C as embedded_graphics_core::pixelcolor::IntoStorage>::Storage: Clone
 {
     ///
     /// Creates a new ST7789 driver instance
@@ -111,6 +120,7 @@ where
             size_x,
             size_y,
             orientation: Orientation::default(),
+            _phantom: PhantomData::default(),
         }
     }
 

@@ -1,5 +1,4 @@
-use embedded_graphics_core::pixelcolor::Rgb565;
-use embedded_graphics_core::prelude::{DrawTarget, IntoStorage, Point, Size};
+use embedded_graphics_core::prelude::{DrawTarget, IntoStorage, Point, Size, PixelColor};
 use embedded_graphics_core::{
     pixelcolor::raw::{RawData, RawU16},
     primitives::Rectangle,
@@ -11,10 +10,12 @@ use embedded_hal::digital::v2::OutputPin;
 use crate::{Error, Orientation, ST7789};
 use display_interface::WriteOnlyDataCommand;
 
-impl<DI, OUT, PinE> ST7789<DI, OUT>
+impl<DI, OUT, PinE, C> ST7789<DI, OUT, C>
 where
     DI: WriteOnlyDataCommand,
     OUT: OutputPin<Error = PinE>,
+    C: PixelColor + IntoStorage, RawU16: From<C>,
+    <C as embedded_graphics_core::pixelcolor::IntoStorage>::Storage: Clone
 {
     /// Returns the bounding box for the entire framebuffer.
     fn framebuffer_bounding_box(&self) -> Rectangle {
@@ -27,13 +28,15 @@ where
     }
 }
 
-impl<DI, OUT, PinE> DrawTarget for ST7789<DI, OUT>
+impl<DI, OUT, PinE, C> DrawTarget for ST7789<DI, OUT, C>
 where
     DI: WriteOnlyDataCommand,
     OUT: OutputPin<Error = PinE>,
-{
+    C: PixelColor + IntoStorage, RawU16: From<C>,
+    <C as embedded_graphics_core::pixelcolor::IntoStorage>::Storage: Clone
+    {
     type Error = Error<PinE>;
-    type Color = Rgb565;
+    type Color = C;
 
     #[cfg(not(feature = "batch"))]
     fn draw_iter<I>(&mut self, pixels: I) -> Result<(), Self::Error>
@@ -54,7 +57,7 @@ where
     #[cfg(feature = "batch")]
     fn draw_iter<T>(&mut self, item: T) -> Result<(), Self::Error>
     where
-        T: IntoIterator<Item = Pixel<Rgb565>>,
+        T: IntoIterator<Item = Pixel<Self::Color>>,
     {
         use crate::batch::DrawBatch;
 
@@ -95,7 +98,7 @@ where
             let mut count = 0u32;
             let max = area.size.width * area.size.height;
 
-            let mut colors = core::iter::repeat(color.into_storage()).take_while(|_| {
+            let mut colors = core::iter::repeat(RawU16::from(color).into_inner()).take_while(|_| {
                 count += 1;
                 count <= max
             });
@@ -111,7 +114,7 @@ where
         }
     }
 
-    fn clear(&mut self, color: Rgb565) -> Result<(), Self::Error>
+    fn clear(&mut self, color: Self::Color) -> Result<(), Self::Error>
     where
         Self: Sized,
     {
@@ -128,10 +131,12 @@ where
     }
 }
 
-impl<DI, OUT, PinE> OriginDimensions for ST7789<DI, OUT>
+impl<DI, OUT, PinE, C> OriginDimensions for ST7789<DI, OUT, C>
 where
     DI: WriteOnlyDataCommand,
     OUT: OutputPin<Error = PinE>,
+    C: PixelColor + IntoStorage, RawU16: From<C>,
+    <C as embedded_graphics_core::pixelcolor::IntoStorage>::Storage: Clone
 {
     fn size(&self) -> Size {
         Size::new(self.size_x.into(), self.size_y.into()) // visible area, not RAM-pixel size
